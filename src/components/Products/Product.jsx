@@ -1,5 +1,6 @@
 import {useState, useEffect} from "react";
 import Loading from "../Loading/Loading"
+import Card from "../Card/Card";
 
 
 async function fetchData() {
@@ -43,14 +44,12 @@ function Product() {
     return (
         <>
             {loading && <Loading />}
-            {err && <p>Error! {err}</p>}
-            {data && data.map((element) => (
-                <div key={element.id}>
-                    <img src={element.image} alt={element.name} />
-                    <p>{element.name}</p>
-                    <p>{element.price}</p>
-                </div>
-            ))}
+            <div className="flex flex-wrap items-stretch h-screen w-full">
+                {err && <p>Error! {err}</p>}
+                {data && data.map((element) => (
+                    <Card key={element.id} image={element.image} name={element.name} price={element.price} />
+                ))}
+            </div>
         </>
     )
 }
