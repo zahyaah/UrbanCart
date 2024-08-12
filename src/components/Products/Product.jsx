@@ -1,4 +1,5 @@
 import {useState, useEffect} from "react";
+import Loading from "../Loading/Loading"
 
 
 async function fetchData() {
@@ -41,7 +42,7 @@ function Product() {
 
     return (
         <>
-            {loading && <p>Loading...</p>}
+            {loading && <Loading />}
             {err && <p>Error! {err}</p>}
             {data && data.map((element) => (
                 <div key={element.id}>
