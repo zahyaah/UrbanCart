@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 
-const LoadingSpinner = () => {
+function Loading() {
   return (
     <div className="flex items-center justify-center min-h-screen">
       <motion.div
@@ -18,4 +18,4 @@ const LoadingSpinner = () => {
   );
 };
 
-export default LoadingSpinner;
+export default Loading;
