@@ -9,7 +9,7 @@ function Card(props) {
     };
 
     return (
-        <motion.div variants={cardVariants} whileHover="whileHover" key={props.id} className="m-4">
+        <motion.div variants={cardVariants} whileHover="whileHover" key={props.id} className="m-4 h-[32rem]">
             <Link to={`/product/${parseInt(props.id)}`}>
                 <div className="h-96 w-80 border-black border-2 border-b-0 md:h-80 md:w-64 lg:h-96 lg:w-80">
                     <img src={props.image} alt={props.name} className="h-full w-full object-cover" />

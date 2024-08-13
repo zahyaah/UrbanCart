@@ -47,19 +47,26 @@ function Product() {
 
     return (
         <>
-            { loading && <Loading /> }
-            { err && <ErrorPage />}
-            <NavBar />
-            <div key={data.id} className="mt-44 h-[calc(100vh-11rem)] flex flex-wrap">
-                <section className="w-1/2 border-black border-2 border-r-0">
-                    <img src={data.image} alt={data.name} />
-                </section>
-                <aside className="w-1/2 border-black border-2">
-                    <p> {data.name} </p>
-                    <p> {data.price} </p>
-                </aside>
-            </div>
+            {loading ? (
+                <Loading />
+            ) : err ? (
+                <ErrorPage />
+            ) : (
+                <>
+                    <NavBar />
+                    <div key={data.id} className="mt-44 h-[calc(100vh-11rem)] flex flex-wrap">
+                        <section className="w-1/2 border-black border-2 border-r-0">
+                            <img src={data.image} alt={data.name} />
+                        </section>
+                        <aside className="w-1/2 border-black border-2">
+                            <p>{data.name}</p>
+                            <p>{data.price}</p>
+                        </aside>
+                    </div>
+                </>
+            )}
         </>
+    
     )
 }
 

@@ -1,7 +1,7 @@
 import {useState, useEffect} from "react"
 import Loading from "../Loading/Loading"
+import NavBar from "../NavBar/NavBar"
 import Card from "../Card/Card";
-
 
 async function fetchData() {
     try {
@@ -43,13 +43,20 @@ function Product() {
 
     return (
         <>
-            {loading && <Loading />}
-            <div className="flex flex-wrap items-stretch mt-44 h-screen w-full">
-                {err && <p>Error! {err}</p>}
-                {data && data.map((element) => (
-                    <Card key={element.id} id={element.id} image={element.image} name={element.name} price={element.price} />
-                ))}
-            </div>
+            {loading ? (
+                <Loading />
+            ) : err ? (
+                <p>Error! {err}</p>
+            ) : (
+                <>
+                    <NavBar />
+                    <div className="flex flex-wrap justify-start items-stretch mt-44 ml-2 mr-2 h-screen w-full">
+                        {data && data.map((element) => (
+                            <Card key={element.id} id={element.id} image={element.image} name={element.name} price={element.price} />
+                        ))}
+                    </div>
+                </>
+            )}
         </>
     )
 }
