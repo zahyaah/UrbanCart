@@ -1,4 +1,4 @@
-import {useState, useEffect} from "react";
+import {useState, useEffect} from "react"
 import Loading from "../Loading/Loading"
 import Card from "../Card/Card";
 
@@ -44,10 +44,10 @@ function Product() {
     return (
         <>
             {loading && <Loading />}
-            <div className="flex flex-wrap items-stretch h-screen w-full">
+            <div className="flex flex-wrap items-stretch mt-44 h-screen w-full">
                 {err && <p>Error! {err}</p>}
                 {data && data.map((element) => (
-                    <Card key={element.id} image={element.image} name={element.name} price={element.price} />
+                    <Card key={element.id} id={element.id} image={element.image} name={element.name} price={element.price} />
                 ))}
             </div>
         </>
