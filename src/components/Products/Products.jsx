@@ -21,7 +21,7 @@ async function fetchData() {
         throw err; 
     }
 }
-function Product() {
+function Products() {
     const [loading, setLoading] = useState(true);
     const [err, setError] = useState(null);
     const [data, setData] = useState([]);
@@ -61,4 +61,4 @@ function Product() {
     )
 }
 
-export default Product; 
+export default Products; 
