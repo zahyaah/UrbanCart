@@ -15,7 +15,7 @@ async function fetchDataById(id) {
         const data = await response.json(); 
         const productFound = data.find((element) => element.id === id); 
         if (!productFound)
-            throw new Error("Product not found!")
+            throw new Error("Product not found :')")
         return productFound; 
     }
     catch (err) {
@@ -50,7 +50,7 @@ function Product() {
             {loading ? (
                 <Loading />
             ) : err ? (
-                <ErrorPage />
+                <ErrorPage errorMessage={err} />
             ) : (
                 <>
                     <NavBar />

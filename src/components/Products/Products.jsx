@@ -2,6 +2,7 @@ import {useState, useEffect} from "react"
 import Loading from "../Loading/Loading"
 import NavBar from "../NavBar/NavBar"
 import Card from "../Card/Card";
+import ErrorPage from "../ErrorPage/ErrorPage";
 
 async function fetchData() {
     try {
@@ -46,7 +47,7 @@ function Products() {
             {loading ? (
                 <Loading />
             ) : err ? (
-                <p>Error! {err}</p>
+                <ErrorPage errorMessage={err} />
             ) : (
                 <>
                     <NavBar />
