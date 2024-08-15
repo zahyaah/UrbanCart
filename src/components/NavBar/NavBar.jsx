@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import CartSVG from "../../assets/Cart.svg";
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
+import { Link } from "react-router-dom"
 
 function NavBar() {
     const style = {
@@ -23,8 +24,11 @@ function NavBar() {
     };
 
     const [cartItemCount, setCartItemCount] = useState(0);
+
+    // accessing the cart state from the redux store
     const cart = useSelector(state => state.cart);
 
+    // effect to update cart item count whenever the cart state changes
     useEffect(() => {
         const totalItems = cart.reduce((sum, item) => sum + parseInt(item.quantity, 10), 0);
         setCartItemCount(totalItems);
@@ -41,14 +45,14 @@ function NavBar() {
                 <p style={style} className="text-4xl text-[#FFE2E2]">Urban Cart</p>
             </div>
             <div className="flex space-x-4 relative mr-6">
-                <button className="relative">
+                <Link to="/cart" className="relative">
                     <img src={CartSVG} alt="Cart" />
                     {cartItemCount !== 0 ? (
                         <div className="absolute -bottom-1 -right-1 bg-[#FFC7C7] text-white text-xs rounded-full h-[25px] w-[25px] flex items-center justify-center">
                             {cartItemCount}
                         </div>
                     ) : null}
-                </button>
+                </Link>
             </div>
         </motion.div>
     );
