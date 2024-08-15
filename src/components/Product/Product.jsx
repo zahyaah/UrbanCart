@@ -7,7 +7,7 @@ import NavBar from "../NavBar/NavBar"
 
 async function fetchDataById(id) {
     try {
-        const response = await fetch("https://65fab3a63909a9a65b1b3cba.mockapi.io/mockAPI/zayd/products", {
+        const response = await fetch("https://fakestoreapi.com/products", {
             method: "GET"
         })
         if (!response.ok)
@@ -56,11 +56,11 @@ function Product() {
                     <NavBar />
                     <div key={data.id} className="mt-44 h-[calc(100vh-11rem)] flex flex-wrap">
                         <section className="w-1/2 border-black border-2 border-r-0">
-                            <img src={data.image} alt={data.name} />
+                            <img src={data.image} alt={data.title} />
                         </section>
                         <aside className="w-1/2 border-black border-2">
-                            <p>{data.name}</p>
-                            <p>{data.price}</p>
+                            <p>{data.title}</p>
+                            <p>${data.price}</p>
                         </aside>
                     </div>
                 </>

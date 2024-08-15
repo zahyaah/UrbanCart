@@ -6,7 +6,7 @@ import ErrorPage from "../ErrorPage/ErrorPage";
 
 async function fetchData() {
     try {
-        const response = await fetch("https://65fab3a63909a9a65b1b3cba.mockapi.io/mockAPI/zayd/products", {
+        const response = await fetch("https://fakestoreapi.com/products", {
             method: "GET"
         })
 
@@ -53,7 +53,7 @@ function Products() {
                     <NavBar />
                     <div className="flex flex-wrap justify-start items-stretch mt-44 ml-2 mr-2 h-screen w-full">
                         {data && data.map((element) => (
-                            <Card key={element.id} id={element.id} image={element.image} name={element.name} price={element.price} />
+                            <Card key={element.id} id={element.id} image={element.image} title={element.title} price={element.price} />
                         ))}
                     </div>
                 </>
