@@ -26,7 +26,7 @@ function CartItem(props) {
     if (!thatProduct) {
         return null;
     }
-    
+
     return (
         <div className="w-full md:w-5/6 border border-gray-300 shadow-lg rounded-lg flex flex-col md:flex-row items-center p-4 mb-4 bg-white">
             <div className="h-48 md:h-72 w-full md:w-2/5 mb-4 md:mb-0 flex-shrink-0">
@@ -64,7 +64,7 @@ function CartItem(props) {
                 </div>
 
                 <p className="text-2xl md:text-3xl font-bold mt-2">
-                    $ {thatProduct.quantity * parseFloat(props.price)}
+                    $ {(thatProduct.quantity * parseFloat(props.price)).toFixed(2)}
                 </p>
 
                 <button 
