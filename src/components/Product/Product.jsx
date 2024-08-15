@@ -4,6 +4,8 @@ import { useParams } from "react-router-dom"
 import Loading from "../Loading/Loading"
 import ErrorPage from "../ErrorPage/ErrorPage"
 import NavBar from "../NavBar/NavBar"
+import { useDispatch } from "react-redux";
+import { addToCart } from "../../features/cart/cartSlice"
 
 async function fetchDataById(id) {
     try {
@@ -45,6 +47,13 @@ function Product() {
         })
     }, [id]);
 
+    const dispatch = useDispatch(); 
+
+    const handleAddToCart = () => {
+        const getId = parseInt(data.id, 10);
+        dispatch(addToCart({id: getId}));
+    }
+
     return (
         <>
             {loading ? (
@@ -54,15 +63,26 @@ function Product() {
             ) : (
                 <>
                     <NavBar />
-                    <div key={data.id} className="mt-44 h-[calc(100vh-11rem)] flex flex-wrap">
-                        <section className="w-1/2 border-black border-2 border-r-0">
-                            <img src={data.image} alt={data.title} />
+                    <div key={data.id} className="mt-44 ml-2 mr-2 h-[calc(100vh-11rem)] flex flex-col md:flex-row md:gap-4">
+                        <section className="w-full md:w-1/2">
+                            <img src={data.image} alt={data.title} className="border-black border-2 w-full h-auto p-4 md:h-[500px] object-contain"/>
                         </section>
-                        <aside className="w-1/2 border-black border-2">
-                            <p>{data.title}</p>
-                            <p>${data.price}</p>
+
+                        <aside className="h-fit w-full md:w-1/2 md:mt-0 md:ml-4 p-6 border-black border-2 rounded-md">
+                            <h2 className="font-mono text-2xl">{data.title}</h2>
+                            <p className="text-xl text-gray-500">{data.description}</p>
+                            <p className="text-2xl font-bold">${data.price}</p>
+
+                            <button className="h-[40px] w-full border-2 p-2 mt-4 border-black font-mono text-center bg-white hover:bg-black hover:text-white"
+                                onClick={handleAddToCart}        
+                            >
+                                ADD TO CART
+                            </button>
                         </aside>
                     </div>
+
+
+
                 </>
             )}
         </>
