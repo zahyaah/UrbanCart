@@ -31,7 +31,7 @@ function NavBar() {
     // effect to update cart item count whenever the cart state changes
     useEffect(() => {
         const totalItems = cart.reduce((sum, item) => sum + parseInt(item.quantity, 10), 0);
-        setTimeout(() => setCartItemCount(totalItems), 1800); 
+        setCartItemCount(totalItems);
     }, [cart]);
 
     return (
