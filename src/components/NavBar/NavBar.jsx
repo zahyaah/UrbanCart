@@ -42,7 +42,7 @@ function NavBar() {
             className={`${styles.navBar} z-20 fixed top-5 left-0 right-0 m-4 h-24 border border-[#d3d3d3] rounded-xl flex justify-between items-center bg-[#8785A2]`}
         >
             <div className="ml-6">
-                <p style={style} className="text-4xl text-[#FFE2E2]">Urban Cart</p>
+                <Link to="/" style={style} className="text-4xl text-[#FFE2E2]">Urban Cart</Link>
             </div>
             <div className="flex space-x-4 relative mr-6">
                 <Link to="/cart" className="relative">
