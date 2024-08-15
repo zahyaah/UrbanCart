@@ -1,6 +1,7 @@
 import { motion } from "framer-motion"
 import { Link } from "react-router-dom"
-import { useState, useEffect } from "react"
+import { useDispatch } from "react-redux";
+import { addToCart } from "../../features/cart/cartSlice"
 
 function Card(props) {
     const cardVariants = {
@@ -10,21 +11,12 @@ function Card(props) {
         },
     };
 
-    const [productID, setProductID] = useState(null);
+    const dispatch = useDispatch(); 
 
-    useEffect(() => {
-        if (productID !== null) {
-            const modId = parseInt(productID, 10);
-            const currentValue = localStorage.getItem(modId);
-
-            if (currentValue === null)
-                localStorage.setItem(modId, "1");
-            else 
-                localStorage.setItem(modId, (parseInt(currentValue, 10) + 1).toString()); // Increment and store
-            location.reload(false);
-            setProductID(null);
-        }
-    }, [productID]);
+    const handleAddToCart = () => {
+        const getId = parseInt(props.id, 10);
+        dispatch(addToCart({id: getId}));
+    }
 
     return (
         <motion.div variants={cardVariants} whileHover="whileHover" key={props.id} className="m-4 h-[32rem]">
@@ -46,7 +38,7 @@ function Card(props) {
                 </div>
 
                 <button className="h-1/2 border-2 p-2 border-t-0 border-black font-mono text-center bg-white hover:bg-black hover:text-white"
-                    onClick={() => setProductID(props.id)}        
+                    onClick={handleAddToCart}        
                 >
                     ADD TO CART
                 </button>
