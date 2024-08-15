@@ -5,6 +5,8 @@ import ErrorPage from "../ErrorPage/ErrorPage"
 import NavBar from "../NavBar/NavBar"
 import { useDispatch } from "react-redux";
 import { addToCart } from "../../features/cart/cartSlice"
+import PopUp from "../PopUp/PopUp"
+
 
 async function fetchDataById(id) {
     try {
@@ -47,11 +49,17 @@ function Product() {
     }, [id]);
 
     const dispatch = useDispatch(); 
-
+    const [visible, setVisible] = useState(false);
+    
     const handleAddToCart = () => {
+        setVisible(true);
         const getId = parseInt(data.id, 10);
         dispatch(addToCart({id: getId}));
+        setTimeout(() => {
+            setVisible(false);
+        }, 3000);
     }
+    
 
     return (
         <>
@@ -61,6 +69,8 @@ function Product() {
                 <ErrorPage errorMessage={err} />
             ) : (
                 <>
+                                
+                    { visible && <PopUp /> }
                     <NavBar />
                     <div key={data.id} className="mt-44 ml-2 mr-2 h-[calc(100vh-11rem)] flex flex-col md:flex-row md:gap-4">
                         <section className="w-full md:w-1/2">
