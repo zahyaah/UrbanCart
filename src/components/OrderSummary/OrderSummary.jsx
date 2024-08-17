@@ -56,14 +56,12 @@ function CartSummary() {
                 <div className="flex justify-between items-center text-gray-600">
                     <span>
                         Platform Fee 
-                        <span className="text-blue-600 ml-1 cursor-pointer">Know More</span>
                     </span>
                     <span className="font-medium text-green-600">FREE</span>
                 </div>
                 <div className="flex justify-between items-center text-gray-600">
                     <span>
                         Shipping Fee 
-                        <span className="text-blue-600 ml-1 cursor-pointer">Know More</span>
                     </span>
                     <span className="font-medium text-green-600">FREE</span>
                 </div>
