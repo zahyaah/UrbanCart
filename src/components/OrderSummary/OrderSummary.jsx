@@ -45,13 +45,26 @@ function CartSummary() {
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error.message}</div>;
 
+    const initialAmount = parseFloat(totalAmount.toFixed(2));
+    const fivePercentDiscount = parseFloat((initialAmount * 0.05).toFixed(2));
+    const finalAmount = (initialAmount - (5 + fivePercentDiscount)).toFixed(2);    
+
+
     return (
         <div className="w-full md:w-5/6 lg:w-1/2 border border-gray-300 shadow-lg rounded-lg p-6 mb-4 bg-white">
             <h2 className="text-xl font-semibold mb-6 text-gray-800">PRICE DETAILS ({items} Items)</h2>
             <div className="space-y-3">
                 <div className="flex justify-between text-gray-600">
                     <span>Total MRP</span>
-                    <span className="font-medium">${totalAmount.toFixed(2)}</span>
+                    <span className="font-medium">${initialAmount}</span>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                    <span>Fixed Discount</span>
+                    <span className="font-medium">- $5</span>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                    <span>Discount on MRP (5%)</span>
+                    <span className="font-medium text-green-600">- ${fivePercentDiscount}</span>
                 </div>
                 <div className="flex justify-between items-center text-gray-600">
                     <span>
@@ -73,7 +86,7 @@ function CartSummary() {
             <hr className="my-4 border-gray-300"/>
             <div className="flex justify-between text-gray-800 text-lg font-semibold">
                 <span>Total Amount</span>
-                <span>${totalAmount.toFixed(2)}</span>
+                <span>${finalAmount}</span>
             </div>
             <button className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 rounded-lg mt-6">
                 PLACE ORDER
