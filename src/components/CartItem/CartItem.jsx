@@ -34,16 +34,16 @@ function CartItem({ item }) {
                 <div className="flex items-center mt-4">
                     <button
                         onClick={decreaseQuantity}
-                        className="px-2 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-l"
+                        className="min-h-[44px] min-w-[44px] bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-l"
                     >
                         -
                     </button>
-                    <span className="px-4 py-2 text-xl md:text-2xl font-semibold bg-gray-100 text-gray-800">
+                    <span className="min-h-[44px] px-4 flex items-center justify-center text-xl md:text-2xl font-semibold bg-gray-100 text-gray-800">
                         {item.quantity}
                     </span>
                     <button
                         onClick={increaseQuantity}
-                        className="px-2 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-r"
+                        className="min-h-[44px] min-w-[44px] bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-r"
                     >
                         +
                     </button>

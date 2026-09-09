@@ -27,9 +27,9 @@ function PopUp() {
         },
         exit: {
             opacity: 0,
-            x: "+870px",
+            scale: 0.95,
             transition: {
-                duration: 0.8,
+                duration: 0.4,
                 ease: "easeInOut"
             }
         }

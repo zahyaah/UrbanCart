@@ -1,7 +1,6 @@
 import { useParams } from "react-router-dom"
 import Loading from "../Loading/Loading"
 import ErrorPage from "../ErrorPage/ErrorPage"
-import NavBar from "../NavBar/NavBar"
 import { useAddToCart } from "../../hooks/useAddToCart"
 import PopUp from "../PopUp/PopUp"
 import { useGetProductByIdQuery } from "../../features/products/productsApi"
@@ -35,8 +34,7 @@ function Product() {
             ) : (
                 <>
                     { toastVisible && <PopUp /> }
-                    <NavBar />
-                    <div key={data.id} className="mt-44 ml-2 mr-2 h-[calc(100vh-11rem)] flex flex-col md:flex-row md:gap-4">
+                    <div key={data.id} className="h-[calc(100vh-11rem)] flex flex-col md:flex-row md:gap-4">
                         <section className="w-full md:w-1/2">
                             <img src={data.image} alt={data.title} className="border-black border-2 w-full h-auto p-4 md:h-[500px] object-contain"/>
                         </section>

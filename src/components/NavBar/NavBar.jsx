@@ -36,7 +36,7 @@ function NavBar() {
                 <Link to="/" style={style} className="text-4xl text-[#FFE2E2]">Urban Cart</Link>
             </div>
             <div className="flex space-x-4 relative mr-6">
-                <Link to="/cart" className="relative">
+                <Link to="/cart" className="relative min-h-[44px] min-w-[44px] flex items-center justify-center">
                     <img src={CartSVG} alt="Cart" />
                     {cartItemCount !== 0 ? (
                         <div className="absolute -bottom-1 -right-1 bg-[#FFC7C7] text-white text-xs rounded-full h-[25px] w-[25px] flex items-center justify-center">

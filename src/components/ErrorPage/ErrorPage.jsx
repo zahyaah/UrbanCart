@@ -1,7 +1,7 @@
 function ErrorPage(props) {
     return (
-        <div className="h-screen w-full overflow-x-hidden overflow-y-hidden bg-red-900 flex items-center">
-            <p className="text-5xl text-black ml-7">
+        <div className="min-h-[calc(100vh-11rem)] w-full bg-red-900 flex items-center px-6 rounded-lg">
+            <p className="text-2xl sm:text-4xl md:text-5xl text-white">
                 {props.errorMessage ? props.errorMessage : "ERROR INVALID PAGE"}
             </p>
         </div>
