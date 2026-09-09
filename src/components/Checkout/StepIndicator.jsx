@@ -1,3 +1,5 @@
+import PropTypes from "prop-types";
+
 const STEP_LABELS = {
     address: "Address",
     payment: "Payment",
@@ -38,5 +40,9 @@ function StepIndicator({ currentStep }) {
         </ol>
     );
 }
+
+StepIndicator.propTypes = {
+    currentStep: PropTypes.oneOf(STEP_ORDER).isRequired,
+};
 
 export default StepIndicator;

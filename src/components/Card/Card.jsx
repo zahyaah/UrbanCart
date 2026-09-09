@@ -1,5 +1,6 @@
 import { motion } from "framer-motion"
 import { Link } from "react-router-dom"
+import PropTypes from "prop-types"
 import { useAddToCart } from "../../hooks/useAddToCart"
 import PopUp from "../PopUp/PopUp"
 
@@ -53,5 +54,12 @@ function Card(props) {
         </>
     );
 }
+
+Card.propTypes = {
+    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+    title: PropTypes.string.isRequired,
+    price: PropTypes.number.isRequired,
+    image: PropTypes.string.isRequired,
+};
 
 export default Card;

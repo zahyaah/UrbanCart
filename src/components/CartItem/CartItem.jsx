@@ -1,5 +1,6 @@
 import { useDispatch } from "react-redux";
 import { removeFromCart, incrementQuantity, decrementQuantity } from "../../features/cart/cartSlice";
+import { cartItemPropType } from "../../features/cart/cartItemPropType";
 
 function CartItem({ item }) {
     const dispatch = useDispatch();
@@ -63,5 +64,9 @@ function CartItem({ item }) {
         </div>
     );
 }
+
+CartItem.propTypes = {
+    item: cartItemPropType.isRequired,
+};
 
 export default CartItem;

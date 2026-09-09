@@ -1,4 +1,6 @@
 import { Link } from "react-router-dom";
+import PropTypes from "prop-types";
+import { cartItemPropType } from "../../features/cart/cartItemPropType";
 
 function ConfirmationStep({ order }) {
     if (!order) return null;
@@ -25,5 +27,13 @@ function ConfirmationStep({ order }) {
         </div>
     );
 }
+
+ConfirmationStep.propTypes = {
+    order: PropTypes.shape({
+        items: PropTypes.arrayOf(cartItemPropType).isRequired,
+        subtotal: PropTypes.number.isRequired,
+        orderNumber: PropTypes.string.isRequired,
+    }),
+};
 
 export default ConfirmationStep;

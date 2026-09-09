@@ -1,3 +1,5 @@
+import PropTypes from "prop-types";
+
 function FormField({ label, name, value, error, onChange, placeholder, type = "text" }) {
     return (
         <label className="block">
@@ -16,5 +18,15 @@ function FormField({ label, name, value, error, onChange, placeholder, type = "t
         </label>
     );
 }
+
+FormField.propTypes = {
+    label: PropTypes.string.isRequired,
+    name: PropTypes.string.isRequired,
+    value: PropTypes.string.isRequired,
+    error: PropTypes.string,
+    onChange: PropTypes.func.isRequired,
+    placeholder: PropTypes.string,
+    type: PropTypes.string,
+};
 
 export default FormField;

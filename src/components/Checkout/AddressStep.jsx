@@ -1,5 +1,7 @@
+import PropTypes from "prop-types";
 import { useCheckoutForm } from "../../hooks/useCheckoutForm";
 import FormField from "./FormField";
+import { addressPropType } from "./checkoutPropTypes";
 
 const EMPTY_ADDRESS = {
     fullName: "",
@@ -54,5 +56,10 @@ function AddressStep({ initialValues, onSubmit }) {
         </form>
     );
 }
+
+AddressStep.propTypes = {
+    initialValues: addressPropType,
+    onSubmit: PropTypes.func.isRequired,
+};
 
 export default AddressStep;

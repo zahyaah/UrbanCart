@@ -1,5 +1,6 @@
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import PropTypes from "prop-types";
 import { selectCartItemCount, selectCartSubtotal } from "../../features/cart/cartSelectors";
 
 function OrderSummary({ mode = "cart", ctaLabel, onCtaClick }) {
@@ -62,5 +63,11 @@ function OrderSummary({ mode = "cart", ctaLabel, onCtaClick }) {
         </div>
     );
 }
+
+OrderSummary.propTypes = {
+    mode: PropTypes.oneOf(["cart", "checkout"]),
+    ctaLabel: PropTypes.string,
+    onCtaClick: PropTypes.func,
+};
 
 export default OrderSummary;

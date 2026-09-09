@@ -1,4 +1,6 @@
+import PropTypes from "prop-types";
 import OrderSummary from "../OrderSummary/OrderSummary";
+import { addressPropType, paymentPropType } from "./checkoutPropTypes";
 
 function ReviewStep({ address, payment, onBack, onPlaceOrder }) {
     const maskedCardNumber = payment?.cardNumber
@@ -38,5 +40,12 @@ function ReviewStep({ address, payment, onBack, onPlaceOrder }) {
         </div>
     );
 }
+
+ReviewStep.propTypes = {
+    address: addressPropType,
+    payment: paymentPropType,
+    onBack: PropTypes.func.isRequired,
+    onPlaceOrder: PropTypes.func.isRequired,
+};
 
 export default ReviewStep;

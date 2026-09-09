@@ -2,9 +2,11 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import PropTypes from "prop-types";
 
 import { decrementQuantity, incrementQuantity, removeFromCart } from "../../features/cart/cartSlice";
 import { selectCartItems, selectCartSubtotal } from "../../features/cart/cartSelectors";
+import { cartItemPropType } from "../../features/cart/cartItemPropType";
 
 const CartDrawerContext = createContext(null);
 
@@ -34,6 +36,10 @@ function CartDrawer({ children }) {
     );
 }
 
+CartDrawer.propTypes = {
+    children: PropTypes.node.isRequired,
+};
+
 function Trigger({ children }) {
     const { open } = useCartDrawerContext();
     return (
@@ -47,6 +53,10 @@ function Trigger({ children }) {
         </button>
     );
 }
+
+Trigger.propTypes = {
+    children: PropTypes.node.isRequired,
+};
 
 function Panel() {
     const { isOpen, close } = useCartDrawerContext();
@@ -147,6 +157,10 @@ function Item({ item }) {
         </div>
     );
 }
+
+Item.propTypes = {
+    item: cartItemPropType.isRequired,
+};
 
 function Footer() {
     const { close } = useCartDrawerContext();

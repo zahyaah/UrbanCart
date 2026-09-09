@@ -1,5 +1,7 @@
+import PropTypes from "prop-types";
 import { useCheckoutForm } from "../../hooks/useCheckoutForm";
 import FormField from "./FormField";
+import { paymentPropType } from "./checkoutPropTypes";
 
 const EMPTY_PAYMENT = {
     cardholderName: "",
@@ -55,5 +57,11 @@ function PaymentStep({ initialValues, onSubmit, onBack }) {
         </form>
     );
 }
+
+PaymentStep.propTypes = {
+    initialValues: paymentPropType,
+    onSubmit: PropTypes.func.isRequired,
+    onBack: PropTypes.func.isRequired,
+};
 
 export default PaymentStep;
