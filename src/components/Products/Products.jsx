@@ -1,53 +1,18 @@
-import {useState, useEffect} from "react"
 import Loading from "../Loading/Loading"
 import NavBar from "../NavBar/NavBar"
 import Card from "../Card/Card";
 import ErrorPage from "../ErrorPage/ErrorPage";
+import { useGetProductsQuery } from "../../features/products/productsApi"
 
-async function fetchData() {
-    try {
-        const response = await fetch("https://fakestoreapi.com/products", {
-            method: "GET"
-        })
-
-        if (!response.ok)
-            throw new Error("Unable to fetch the data!");
-
-        const storeData = await response.json(); 
-
-        return storeData; 
-    }
-    catch (err) {
-        console.log(err); 
-        throw err; 
-    }
-}
 function Products() {
-    const [loading, setLoading] = useState(true);
-    const [err, setError] = useState(null);
-    const [data, setData] = useState([]);
-
-    useEffect(() => {
-        fetchData()
-        .then((dataFetched) => {
-            if (dataFetched)
-                setData(dataFetched);
-            else 
-                setError("No data available")
-            setLoading(false);
-        })
-        .catch((fetchError) => {
-            setError(fetchError.message || "An error occurred :')");
-            setLoading(false);
-        })
-    }, []);
+    const { data, isLoading, isError } = useGetProductsQuery();
 
     return (
         <>
-            {loading ? (
+            {isLoading ? (
                 <Loading />
-            ) : err ? (
-                <ErrorPage errorMessage={err} />
+            ) : isError ? (
+                <ErrorPage errorMessage="Unable to fetch products" />
             ) : (
                 <>
                     <NavBar />
@@ -62,4 +27,4 @@ function Products() {
     )
 }
 
-export default Products; 
+export default Products;
