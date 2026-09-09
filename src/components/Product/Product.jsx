@@ -3,8 +3,7 @@ import { useParams } from "react-router-dom"
 import Loading from "../Loading/Loading"
 import ErrorPage from "../ErrorPage/ErrorPage"
 import NavBar from "../NavBar/NavBar"
-import { useDispatch } from "react-redux";
-import { addToCart } from "../../features/cart/cartSlice"
+import { useAddToCart } from "../../hooks/useAddToCart"
 import PopUp from "../PopUp/PopUp"
 
 
@@ -48,18 +47,17 @@ function Product() {
         })
     }, [id]);
 
-    const dispatch = useDispatch(); 
-    const [visible, setVisible] = useState(false);
-    
+    const { addProductToCart, toastVisible } = useAddToCart();
+
     const handleAddToCart = () => {
-        setVisible(true);
-        const getId = parseInt(data.id, 10);
-        dispatch(addToCart({id: getId}));
-        setTimeout(() => {
-            setVisible(false);
-        }, 3000);
+        addProductToCart({
+            id: parseInt(data.id, 10),
+            title: data.title,
+            price: data.price,
+            image: data.image,
+        });
     }
-    
+
 
     return (
         <>
@@ -70,7 +68,7 @@ function Product() {
             ) : (
                 <>
                                 
-                    { visible && <PopUp /> }
+                    { toastVisible && <PopUp /> }
                     <NavBar />
                     <div key={data.id} className="mt-44 ml-2 mr-2 h-[calc(100vh-11rem)] flex flex-col md:flex-row md:gap-4">
                         <section className="w-full md:w-1/2">

@@ -2,9 +2,9 @@ import styles from "./NavBar.module.css";
 import "../../fonts/fonts.css";
 import { motion } from "framer-motion";
 import CartSVG from "../../assets/Cart.svg";
-import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom"
+import { selectCartItemCount } from "../../features/cart/cartSelectors";
 
 function NavBar() {
     const style = {
@@ -23,16 +23,7 @@ function NavBar() {
         }
     };
 
-    const [cartItemCount, setCartItemCount] = useState(0);
-
-    // accessing the cart state from the redux store
-    const cart = useSelector(state => state.cart);
-
-    // effect to update cart item count whenever the cart state changes
-    useEffect(() => {
-        const totalItems = cart.reduce((sum, item) => sum + parseInt(item.quantity, 10), 0);
-        setCartItemCount(totalItems);
-    }, [cart]);
+    const cartItemCount = useSelector(selectCartItemCount);
 
     return (
         <motion.div

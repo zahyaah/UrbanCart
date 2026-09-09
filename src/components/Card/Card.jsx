@@ -1,8 +1,6 @@
 import { motion } from "framer-motion"
 import { Link } from "react-router-dom"
-import { useDispatch } from "react-redux";
-import { addToCart } from "../../features/cart/cartSlice"
-import { useState } from "react"
+import { useAddToCart } from "../../hooks/useAddToCart"
 import PopUp from "../PopUp/PopUp"
 
 function Card(props) {
@@ -13,23 +11,22 @@ function Card(props) {
         },
     };
 
-    const dispatch = useDispatch(); 
-    const [visible, setVisible] = useState(false);
+    const { addProductToCart, toastVisible } = useAddToCart();
 
     const handleAddToCart = () => {
-        setVisible(true);
-        const getId = parseInt(props.id, 10);
-        dispatch(addToCart({id: getId}));
-        setTimeout(() => {
-            setVisible(false);
-        }, 3000);
+        addProductToCart({
+            id: parseInt(props.id, 10),
+            title: props.title,
+            price: props.price,
+            image: props.image,
+        });
     }
 
 
     return (
         <>
-            
-            { visible && <PopUp /> }
+
+            { toastVisible && <PopUp /> }
             <motion.div variants={cardVariants} whileHover="whileHover" key={props.id} className="m-4 h-[32rem]">
                 <Link to={`/product/${parseInt(props.id)}`}>
                 <div className="h-96 w-80 border-black border-2 border-b-0 md:h-80 md:w-64 lg:h-96 lg:w-80">

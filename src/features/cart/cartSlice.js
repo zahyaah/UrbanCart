@@ -1,13 +1,25 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-// load initial state from localstorage
+export const CART_STORAGE_KEY = "urbancart-cart";
+
+const isValidCartItem = (item) =>
+    Boolean(item) &&
+    (typeof item.id === "number" || typeof item.id === "string") &&
+    typeof item.title === "string" &&
+    typeof item.price === "number" &&
+    typeof item.image === "string" &&
+    Number.isInteger(item.quantity) &&
+    item.quantity > 0;
+
 const loadState = () => {
     try {
-        const serializedState = localStorage.getItem("cart");
-        return serializedState ? JSON.parse(serializedState) : { cart: [] };
+        const serialized = localStorage.getItem(CART_STORAGE_KEY);
+        if (!serialized) return [];
+        const parsed = JSON.parse(serialized);
+        return Array.isArray(parsed) ? parsed.filter(isValidCartItem) : [];
     } catch (e) {
-        console.error("Could not load state", e);
-        return { cart: [] };
+        console.error("Could not load cart state", e);
+        return [];
     }
 };
 
@@ -15,43 +27,50 @@ const initialState = loadState();
 
 export const cartSlice = createSlice({
     name: "cart",
-    initialState, 
+    initialState,
     reducers: {
+        // Adds a full product snapshot. Price/title/image are locked in at
+        // add time so the cart never needs to re-fetch product data.
         addToCart: (state, action) => {
-            const existingItem = state.cart.find(item => item.id === action.payload.id);
+            const { id, title, price, image, quantity = 1 } = action.payload;
+            const existingItem = state.find((item) => item.id === id);
             if (existingItem) {
-                existingItem.quantity += action.payload.quantity || 1;
-            } 
-            else {
-                state.cart.push({
-                    id: action.payload.id, 
-                    quantity: action.payload.quantity || 1
-                });
+                existingItem.quantity += quantity;
+            } else {
+                state.push({ id, title, price, image, quantity });
             }
-
-            // save the updated cart state in the loclastorage. 
-            localStorage.setItem("cart", JSON.stringify(state));
         },
-        reduceQuantity: (state, action) => {
-            const existingItem = state.cart.find(item => item.id === action.payload.id);
+        // Stepper actions only ever operate on items already in the cart,
+        // so a stale trigger can never create a malformed entry.
+        incrementQuantity: (state, action) => {
+            const existingItem = state.find((item) => item.id === action.payload.id);
             if (existingItem) {
-                existingItem.quantity -= action.payload.quantity || 1;
-                if (existingItem.quantity <= 0) {
-                    state.cart = state.cart.filter(item => item.id !== action.payload.id);
-                }
+                existingItem.quantity += 1;
             }
-            
-            // save the updated cart state in the localstorage. 
-            localStorage.setItem("cart", JSON.stringify(state));
+        },
+        decrementQuantity: (state, action) => {
+            const existingItem = state.find((item) => item.id === action.payload.id);
+            if (!existingItem) return;
+            if (existingItem.quantity <= 1) {
+                return state.filter((item) => item.id !== action.payload.id);
+            }
+            existingItem.quantity -= 1;
         },
         removeFromCart: (state, action) => {
-            state.cart = state.cart.filter(item => item.id !== action.payload.id);
-
-            // save the updated cart state in the localstorage. 
-            localStorage.setItem("cart", JSON.stringify(state));
-        }
-    } 
+            return state.filter((item) => item.id !== action.payload.id);
+        },
+        clearCart: () => {
+            return [];
+        },
+    },
 });
 
-export const { addToCart, reduceQuantity, removeFromCart } = cartSlice.actions; 
+export const {
+    addToCart,
+    incrementQuantity,
+    decrementQuantity,
+    removeFromCart,
+    clearCart,
+} = cartSlice.actions;
+
 export default cartSlice.reducer;
