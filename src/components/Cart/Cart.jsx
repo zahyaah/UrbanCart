@@ -7,7 +7,7 @@ function Cart() {
     const items = useSelector(selectCartItems);
 
     return (
-        <div className="flex flex-col items-center h-fit w-full bg-gray-100 p-4 sm:p-8 rounded-lg">
+        <div className="flex flex-col items-center h-fit w-full rounded-lg bg-muted/40 p-4 sm:p-8">
             {items.length !== 0 ? (
                 <>
                     <OrderSummary mode="cart" />
@@ -16,7 +16,7 @@ function Cart() {
                     ))}
                 </>
             ) : (
-                <p className="text-center text-2xl sm:text-3xl py-12">Cart is empty!</p>
+                <p className="text-center text-2xl sm:text-3xl py-12 text-muted-foreground">Cart is empty!</p>
             )}
         </div>
     );

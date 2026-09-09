@@ -1,4 +1,5 @@
 import PropTypes from "prop-types";
+import { Separator } from "../ui/separator";
 
 const STEP_LABELS = {
     address: "Address",
@@ -21,19 +22,19 @@ function StepIndicator({ currentStep }) {
                             <span
                                 className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-semibold border-2 ${
                                     isComplete
-                                        ? "bg-black text-white border-black"
+                                        ? "bg-primary text-primary-foreground border-primary"
                                         : isActive
-                                        ? "border-black text-black"
-                                        : "border-gray-300 text-gray-400"
+                                        ? "border-primary text-primary"
+                                        : "border-muted-foreground/40 text-muted-foreground"
                                 }`}
                             >
                                 {index + 1}
                             </span>
-                            <span className={`hidden sm:inline text-sm ${isActive ? "font-semibold" : "text-gray-500"}`}>
+                            <span className={`hidden sm:inline text-sm ${isActive ? "font-semibold" : "text-muted-foreground"}`}>
                                 {STEP_LABELS[step]}
                             </span>
                         </div>
-                        {index < STEP_ORDER.length - 1 && <div className="w-6 sm:w-12 h-px bg-gray-300" />}
+                        {index < STEP_ORDER.length - 1 && <Separator className="w-6 sm:w-12" />}
                     </li>
                 );
             })}

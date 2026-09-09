@@ -1,6 +1,9 @@
 import { useDispatch } from "react-redux";
+import { Minus, Plus } from "lucide-react";
 import { removeFromCart, incrementQuantity, decrementQuantity } from "../../features/cart/cartSlice";
 import { cartItemPropType } from "../../features/cart/cartItemPropType";
+import { Card } from "../ui/card";
+import { Button } from "../ui/button";
 
 function CartItem({ item }) {
     const dispatch = useDispatch();
@@ -18,11 +21,13 @@ function CartItem({ item }) {
     };
 
     return (
-        <div className="w-full md:w-5/6 border border-gray-300 shadow-lg rounded-lg flex flex-col md:flex-row items-center p-4 mb-4 bg-white">
+        <Card className="w-full md:w-5/6 flex-col md:flex-row items-center gap-4 border-2 border-foreground p-4 mb-4">
             <div className="h-48 md:h-72 w-full md:w-2/5 mb-4 md:mb-0 flex-shrink-0">
                 <img
                     src={item.image}
                     alt={item.title}
+                    width={400}
+                    height={400}
                     className="h-full w-full object-contain rounded-lg"
                 />
             </div>
@@ -31,37 +36,46 @@ function CartItem({ item }) {
                     {item.title}
                 </h2>
 
-                {/* quantity controls */}
-                <div className="flex items-center mt-4">
-                    <button
+                <div className="flex items-center mt-4 gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="min-h-[44px] min-w-[44px]"
                         onClick={decreaseQuantity}
-                        className="min-h-[44px] min-w-[44px] bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-l"
+                        aria-label={`Decrease quantity of ${item.title}`}
                     >
-                        -
-                    </button>
-                    <span className="min-h-[44px] px-4 flex items-center justify-center text-xl md:text-2xl font-semibold bg-gray-100 text-gray-800">
+                        <Minus aria-hidden="true" />
+                    </Button>
+                    <span className="min-h-[44px] px-4 flex items-center justify-center text-xl md:text-2xl font-semibold">
                         {item.quantity}
                     </span>
-                    <button
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="min-h-[44px] min-w-[44px]"
                         onClick={increaseQuantity}
-                        className="min-h-[44px] min-w-[44px] bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-r"
+                        aria-label={`Increase quantity of ${item.title}`}
                     >
-                        +
-                    </button>
+                        <Plus aria-hidden="true" />
+                    </Button>
                 </div>
 
                 <p className="text-2xl md:text-3xl font-bold mt-2">
                     $ {(item.quantity * item.price).toFixed(2)}
                 </p>
 
-                <button
+                <Button
+                    type="button"
+                    variant="outline"
+                    className="mt-4 w-fit min-h-[44px] border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive"
                     onClick={removeItem}
-                    className="mt-4 bg-transparent hover:bg-red-600 text-red-700 font-semibold hover:text-white py-2 px-4 border border-red-500 hover:border-transparent rounded"
                 >
                     Remove Item
-                </button>
+                </Button>
             </div>
-        </div>
+        </Card>
     );
 }
 

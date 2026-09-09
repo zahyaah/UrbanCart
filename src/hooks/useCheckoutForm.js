@@ -11,10 +11,12 @@ export function useCheckoutForm(initialValues, validate) {
         setValues((prev) => ({ ...prev, [name]: value }));
     }, []);
 
+    // Returns the errors object (not just a boolean) so callers can focus
+    // the first invalid field on a failed submit.
     const validateAll = useCallback(() => {
         const nextErrors = validate(values);
         setErrors(nextErrors);
-        return Object.keys(nextErrors).length === 0;
+        return nextErrors;
     }, [values, validate]);
 
     return { values, errors, handleChange, validateAll };

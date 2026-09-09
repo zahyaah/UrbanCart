@@ -1,21 +1,24 @@
 import PropTypes from "prop-types";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
 
-function FormField({ label, name, value, error, onChange, placeholder, type = "text" }) {
+function FormField({ label, name, value, error, onChange, placeholder, type = "text", ...inputProps }) {
     return (
-        <label className="block">
-            <span className="text-sm font-medium text-gray-700">{label}</span>
-            <input
+        <div className="space-y-1.5">
+            <Label htmlFor={name}>{label}</Label>
+            <Input
+                id={name}
                 type={type}
                 name={name}
                 value={value}
                 onChange={onChange}
                 placeholder={placeholder}
-                className={`mt-1 block w-full min-h-[44px] rounded-md border px-3 ${
-                    error ? "border-red-500" : "border-gray-300"
-                }`}
+                aria-invalid={Boolean(error)}
+                className="min-h-[44px]"
+                {...inputProps}
             />
-            {error && <span className="text-sm text-red-600">{error}</span>}
-        </label>
+            {error && <p className="text-sm text-destructive">{error}</p>}
+        </div>
     );
 }
 

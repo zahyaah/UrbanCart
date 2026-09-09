@@ -2,6 +2,8 @@ import PropTypes from "prop-types";
 import { useCheckoutForm } from "../../hooks/useCheckoutForm";
 import FormField from "./FormField";
 import { addressPropType } from "./checkoutPropTypes";
+import { Card } from "../ui/card";
+import { Button } from "../ui/button";
 
 const EMPTY_ADDRESS = {
     fullName: "",
@@ -30,30 +32,36 @@ function AddressStep({ initialValues, onSubmit }) {
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        if (validateAll()) {
+        const validationErrors = validateAll();
+        const firstErrorField = Object.keys(validationErrors)[0];
+        if (!firstErrorField) {
             onSubmit(values);
+        } else {
+            document.getElementsByName(firstErrorField)[0]?.focus();
         }
     };
 
     return (
-        <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
-            <h2 className="font-display text-display-sm">Shipping Address</h2>
+        <Card className="border-2 border-foreground p-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <h2 className="font-display text-display-sm">Shipping Address</h2>
 
-            <FormField label="Full name" name="fullName" value={values.fullName} error={errors.fullName} onChange={handleChange} />
-            <FormField label="Address" name="addressLine1" value={values.addressLine1} error={errors.addressLine1} onChange={handleChange} />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField label="City" name="city" value={values.city} error={errors.city} onChange={handleChange} />
-                <FormField label="State / Region" name="region" value={values.region} error={errors.region} onChange={handleChange} />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField label="Postal code" name="postalCode" value={values.postalCode} error={errors.postalCode} onChange={handleChange} />
-                <FormField label="Country" name="country" value={values.country} error={errors.country} onChange={handleChange} />
-            </div>
+                <FormField label="Full name" name="fullName" autoComplete="name" value={values.fullName} error={errors.fullName} onChange={handleChange} />
+                <FormField label="Address" name="addressLine1" autoComplete="street-address" value={values.addressLine1} error={errors.addressLine1} onChange={handleChange} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField label="City" name="city" autoComplete="address-level2" value={values.city} error={errors.city} onChange={handleChange} />
+                    <FormField label="State / Region" name="region" autoComplete="address-level1" value={values.region} error={errors.region} onChange={handleChange} />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField label="Postal code" name="postalCode" autoComplete="postal-code" value={values.postalCode} error={errors.postalCode} onChange={handleChange} />
+                    <FormField label="Country" name="country" autoComplete="country-name" value={values.country} error={errors.country} onChange={handleChange} />
+                </div>
 
-            <button type="submit" className="min-h-[44px] w-full bg-black text-white font-display tracking-wide rounded-md hover:bg-gray-800">
-                Continue to Payment
-            </button>
-        </form>
+                <Button type="submit" className="min-h-[44px] w-full font-display tracking-wide">
+                    Continue to Payment
+                </Button>
+            </form>
+        </Card>
     );
 }
 

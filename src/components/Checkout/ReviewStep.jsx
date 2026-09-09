@@ -1,6 +1,8 @@
 import PropTypes from "prop-types";
 import OrderSummary from "../OrderSummary/OrderSummary";
 import { addressPropType, paymentPropType } from "./checkoutPropTypes";
+import { Card } from "../ui/card";
+import { Button } from "../ui/button";
 
 function ReviewStep({ address, payment, onBack, onPlaceOrder }) {
     const maskedCardNumber = payment?.cardNumber
@@ -9,12 +11,12 @@ function ReviewStep({ address, payment, onBack, onPlaceOrder }) {
 
     return (
         <div className="space-y-6">
-            <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+            <Card className="border-2 border-foreground p-6 space-y-4">
                 <h2 className="font-display text-display-sm">Review Your Order</h2>
 
                 <div>
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase">Shipping to</h3>
-                    <p className="text-gray-800">
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase">Shipping to</h3>
+                    <p>
                         {address?.fullName}<br />
                         {address?.addressLine1}<br />
                         {address?.city}{address?.region ? `, ${address.region}` : ""} {address?.postalCode}<br />
@@ -23,18 +25,19 @@ function ReviewStep({ address, payment, onBack, onPlaceOrder }) {
                 </div>
 
                 <div>
-                    <h3 className="text-sm font-semibold text-gray-500 uppercase">Payment</h3>
-                    <p className="text-gray-800">{payment?.cardholderName} &middot; {maskedCardNumber}</p>
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase">Payment</h3>
+                    <p>{payment?.cardholderName} &middot; {maskedCardNumber}</p>
                 </div>
 
-                <button
+                <Button
                     type="button"
+                    variant="outline"
                     onClick={onBack}
-                    className="min-h-[44px] w-full border-2 border-black font-display tracking-wide rounded-md hover:bg-gray-100"
+                    className="min-h-[44px] w-full font-display tracking-wide"
                 >
                     Back
-                </button>
-            </div>
+                </Button>
+            </Card>
 
             <OrderSummary mode="checkout" ctaLabel="PLACE ORDER" onCtaClick={onPlaceOrder} />
         </div>

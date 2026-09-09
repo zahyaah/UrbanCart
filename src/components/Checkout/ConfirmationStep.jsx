@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import { cartItemPropType } from "../../features/cart/cartItemPropType";
+import { Card } from "../ui/card";
+import { Button } from "../ui/button";
 
 function ConfirmationStep({ order }) {
     if (!order) return null;
@@ -8,23 +10,20 @@ function ConfirmationStep({ order }) {
     const itemCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
 
     return (
-        <div className="bg-white border border-gray-200 rounded-lg p-8 text-center space-y-4">
-            <h2 className="font-display text-display-md text-green-700">Order Placed!</h2>
-            <p className="text-gray-600">
-                Order number <span className="font-mono font-semibold">{order.orderNumber}</span>
+        <Card className="border-2 border-foreground p-8 text-center space-y-4">
+            <h2 className="font-display text-display-md text-success">Order Placed!</h2>
+            <p className="text-muted-foreground">
+                Order number <span className="font-mono font-semibold text-foreground">{order.orderNumber}</span>
             </p>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
                 {itemCount} item{itemCount === 1 ? "" : "s"} &middot; $ {order.subtotal.toFixed(2)} subtotal
             </p>
-            <p className="text-sm text-gray-500">This is a demo order confirmation. No real purchase was made.</p>
+            <p className="text-sm text-muted-foreground">This is a demo order confirmation. No real purchase was made.</p>
 
-            <Link
-                to="/"
-                className="inline-flex min-h-[44px] px-6 items-center justify-center bg-black text-white font-display tracking-wide rounded-md hover:bg-gray-800"
-            >
-                Continue Shopping
-            </Link>
-        </div>
+            <Button asChild className="min-h-[44px] font-display tracking-wide">
+                <Link to="/">Continue Shopping</Link>
+            </Button>
+        </Card>
     );
 }
 

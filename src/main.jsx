@@ -5,13 +5,18 @@ import App from './App.jsx'
 import './index.css'
 import { store } from "./redux/store.js"
 import ErrorBoundary from './components/ErrorBoundary/ErrorBoundary.jsx'
+import { ThemeProvider } from './providers/ThemeProvider.jsx'
+import { Toaster } from './components/ui/sonner.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ErrorBoundary>
-      <Provider store={store}>
-        <App />
-      </Provider>
+      <ThemeProvider>
+        <Provider store={store}>
+          <App />
+          <Toaster />
+        </Provider>
+      </ThemeProvider>
     </ErrorBoundary>
   </StrictMode>,
 )

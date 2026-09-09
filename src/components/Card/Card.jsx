@@ -1,18 +1,23 @@
-import { motion } from "framer-motion"
+import { motion, useReducedMotion } from "framer-motion"
 import { Link } from "react-router-dom"
 import PropTypes from "prop-types"
 import { useAddToCart } from "../../hooks/useAddToCart"
-import PopUp from "../PopUp/PopUp"
+import { Card as UICard } from "../ui/card"
+import { Button } from "../ui/button"
+import { Badge } from "../ui/badge"
 
 function Card(props) {
+    const prefersReducedMotion = useReducedMotion();
     const cardVariants = {
-        whileHover: {
-          scale: 1.09,
-          boxShadow: "0px 10px 20px rgba(0, 0, 0, 0.2)"
-        },
+        whileHover: prefersReducedMotion
+            ? {}
+            : {
+                scale: 1.03,
+                boxShadow: "0 12px 24px -8px rgba(0,0,0,0.35)"
+              },
     };
 
-    const { addProductToCart, toastVisible } = useAddToCart();
+    const { addProductToCart } = useAddToCart();
 
     const handleAddToCart = () => {
         addProductToCart({
@@ -23,35 +28,30 @@ function Card(props) {
         });
     }
 
-
     return (
-        <>
-            { toastVisible && <PopUp /> }
-            <motion.div variants={cardVariants} whileHover="whileHover" className="w-full flex flex-col">
+        <motion.div variants={cardVariants} whileHover="whileHover" className="w-full">
+            <UICard className="gap-0 overflow-hidden rounded-lg border-2 border-foreground py-0">
                 <Link to={`/product/${parseInt(props.id, 10)}`} className="block">
-                    <div className="aspect-square w-full border-black border-2 border-b-0">
-                        <img src={props.image} alt={props.title} className="h-full w-full object-contain p-4" />
+                    <div className="aspect-square w-full border-b-2 border-foreground bg-card">
+                        <img src={props.image} alt={props.title} width={400} height={400} className="h-full w-full object-contain p-4" />
                     </div>
                 </Link>
 
-                <div className="flex flex-col">
-                    <div className="flex bg-white border-black border-2">
-                        <div className="flex-1 border-r-2 border-black font-display text-base sm:text-lg font-semibold p-2 flex items-start justify-center text-center">
-                            {props.title.length >= 15 ? props.title.slice(0, 15)+"..." : props.title}
-                        </div>
-                        <div className="flex-1 flex p-2 items-center justify-center">
-                            ${props.price}
-                        </div>
-                    </div>
-
-                    <button className="min-h-[44px] border-2 border-t-0 p-2 border-black font-display tracking-wide text-center bg-white hover:bg-black hover:text-white"
-                        onClick={handleAddToCart}
-                    >
-                        ADD TO CART
-                    </button>
+                <div className="flex items-start justify-between gap-2 p-3">
+                    <h3 className="font-display text-base leading-tight sm:text-lg">
+                        {props.title.length >= 15 ? props.title.slice(0, 15) + "…" : props.title}
+                    </h3>
+                    <Badge className="shrink-0 bg-accent text-accent-foreground">${props.price}</Badge>
                 </div>
-            </motion.div>
-        </>
+
+                <Button
+                    className="min-h-[44px] w-full rounded-none border-t-2 border-foreground font-display tracking-wide"
+                    onClick={handleAddToCart}
+                >
+                    ADD TO CART
+                </Button>
+            </UICard>
+        </motion.div>
     );
 }
 

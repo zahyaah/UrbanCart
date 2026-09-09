@@ -1,11 +1,17 @@
 import PropTypes from "prop-types";
+import { CircleAlert } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "../ui/alert";
 
 function ErrorPage(props) {
     return (
-        <div className="min-h-[calc(100vh-11rem)] w-full bg-red-900 flex items-center px-6 rounded-lg">
-            <p className="text-2xl sm:text-4xl md:text-5xl text-white">
-                {props.errorMessage ? props.errorMessage : "ERROR INVALID PAGE"}
-            </p>
+        <div className="min-h-[calc(100vh-11rem)] w-full flex items-center justify-center px-6">
+            <Alert variant="destructive" className="max-w-md border-2 border-destructive">
+                <CircleAlert aria-hidden="true" />
+                <AlertTitle className="font-display text-base">Something went wrong</AlertTitle>
+                <AlertDescription>
+                    {props.errorMessage ? props.errorMessage : "This page doesn't exist."}
+                </AlertDescription>
+            </Alert>
         </div>
     )
 }
