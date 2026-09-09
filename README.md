@@ -41,4 +41,4 @@ The checkout wizard keeps its step state locally (`useReducer` in `Checkout.jsx`
 
 ## Live
 
-_Added after deployment._
+https://urbancart-blush.vercel.app
