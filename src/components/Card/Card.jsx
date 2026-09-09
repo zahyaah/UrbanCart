@@ -35,7 +35,7 @@ function Card(props) {
 
                 <div className="flex flex-col">
                     <div className="flex bg-white border-black border-2">
-                        <div className="flex-1 border-r-2 border-black text-base sm:text-lg font-bold p-2 flex items-start justify-center text-center">
+                        <div className="flex-1 border-r-2 border-black font-display text-base sm:text-lg font-semibold p-2 flex items-start justify-center text-center">
                             {props.title.length >= 15 ? props.title.slice(0, 15)+"..." : props.title}
                         </div>
                         <div className="flex-1 flex p-2 items-center justify-center">
@@ -43,7 +43,7 @@ function Card(props) {
                         </div>
                     </div>
 
-                    <button className="min-h-[44px] border-2 border-t-0 p-2 border-black font-mono text-center bg-white hover:bg-black hover:text-white"
+                    <button className="min-h-[44px] border-2 border-t-0 p-2 border-black font-display tracking-wide text-center bg-white hover:bg-black hover:text-white"
                         onClick={handleAddToCart}
                     >
                         ADD TO CART

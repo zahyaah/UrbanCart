@@ -35,7 +35,7 @@ function AddressStep({ initialValues, onSubmit }) {
 
     return (
         <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
-            <h2 className="text-xl font-semibold">Shipping Address</h2>
+            <h2 className="font-display text-display-sm">Shipping Address</h2>
 
             <FormField label="Full name" name="fullName" value={values.fullName} error={errors.fullName} onChange={handleChange} />
             <FormField label="Address" name="addressLine1" value={values.addressLine1} error={errors.addressLine1} onChange={handleChange} />
@@ -48,7 +48,7 @@ function AddressStep({ initialValues, onSubmit }) {
                 <FormField label="Country" name="country" value={values.country} error={errors.country} onChange={handleChange} />
             </div>
 
-            <button type="submit" className="min-h-[44px] w-full bg-black text-white font-semibold rounded-md hover:bg-gray-800">
+            <button type="submit" className="min-h-[44px] w-full bg-black text-white font-display tracking-wide rounded-md hover:bg-gray-800">
                 Continue to Payment
             </button>
         </form>

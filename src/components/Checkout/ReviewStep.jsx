@@ -8,7 +8,7 @@ function ReviewStep({ address, payment, onBack, onPlaceOrder }) {
     return (
         <div className="space-y-6">
             <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
-                <h2 className="text-xl font-semibold">Review Your Order</h2>
+                <h2 className="font-display text-display-sm">Review Your Order</h2>
 
                 <div>
                     <h3 className="text-sm font-semibold text-gray-500 uppercase">Shipping to</h3>
@@ -28,7 +28,7 @@ function ReviewStep({ address, payment, onBack, onPlaceOrder }) {
                 <button
                     type="button"
                     onClick={onBack}
-                    className="min-h-[44px] w-full border-2 border-black font-semibold rounded-md hover:bg-gray-100"
+                    className="min-h-[44px] w-full border-2 border-black font-display tracking-wide rounded-md hover:bg-gray-100"
                 >
                     Back
                 </button>

@@ -83,7 +83,7 @@ function Panel() {
                         transition={{ duration: 0.3, ease: "easeInOut" }}
                     >
                         <div className="flex items-center justify-between p-4 border-b border-gray-200">
-                            <h2 className="text-lg font-semibold">Your Cart</h2>
+                            <h2 className="font-display text-xl">Your Cart</h2>
                             <button
                                 type="button"
                                 onClick={close}
@@ -117,7 +117,7 @@ function Item({ item }) {
         <div className="flex items-center gap-3 border-b border-gray-100 pb-3">
             <img src={item.image} alt={item.title} className="h-14 w-14 object-contain flex-shrink-0" />
             <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{item.title}</p>
+                <p className="text-sm font-display font-medium truncate">{item.title}</p>
                 <p className="text-sm text-gray-500">$ {item.price.toFixed(2)}</p>
                 <div className="flex items-center gap-2 mt-1">
                     <button
@@ -164,14 +164,14 @@ function Footer() {
             <Link
                 to="/cart"
                 onClick={close}
-                className="min-h-[44px] flex items-center justify-center border-2 border-black font-mono hover:bg-black hover:text-white"
+                className="min-h-[44px] flex items-center justify-center border-2 border-black font-display tracking-wide hover:bg-black hover:text-white"
             >
                 VIEW CART
             </Link>
             <Link
                 to="/checkout"
                 onClick={close}
-                className="min-h-[44px] flex items-center justify-center bg-yellow-500 hover:bg-yellow-600 text-white font-semibold"
+                className="min-h-[44px] flex items-center justify-center bg-yellow-500 hover:bg-yellow-600 text-white font-display tracking-wide"
             >
                 CHECKOUT
             </Link>

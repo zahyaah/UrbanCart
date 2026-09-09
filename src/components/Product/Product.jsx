@@ -40,11 +40,11 @@ function Product() {
                         </section>
 
                         <aside className="h-fit w-full md:w-1/2 md:mt-0 md:ml-4 p-6 border-black border-2 rounded-md">
-                            <h2 className="font-mono text-2xl">{data.title}</h2>
-                            <p className="text-xl text-gray-500">{data.description}</p>
-                            <p className="text-2xl font-bold">${data.price}</p>
+                            <h2 className="font-display text-display-sm">{data.title}</h2>
+                            <p className="text-base sm:text-xl text-gray-500 mt-2">{data.description}</p>
+                            <p className="text-2xl font-bold mt-2">${data.price}</p>
 
-                            <button className="h-[40px] w-full border-2 p-2 mt-4 border-black font-mono text-center bg-white hover:bg-black hover:text-white"
+                            <button className="min-h-[44px] w-full border-2 p-2 mt-4 border-black font-display tracking-wide text-center bg-white hover:bg-black hover:text-white"
                                 onClick={handleAddToCart}
                             >
                                 ADD TO CART

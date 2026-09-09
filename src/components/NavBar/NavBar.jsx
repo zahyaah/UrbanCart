@@ -1,5 +1,3 @@
-import styles from "./NavBar.module.css";
-import "../../fonts/fonts.css";
 import { motion } from "framer-motion";
 import CartSVG from "../../assets/Cart.svg";
 import { useSelector } from "react-redux";
@@ -8,10 +6,6 @@ import { selectCartItemCount } from "../../features/cart/cartSelectors";
 import CartDrawer from "../CartDrawer/CartDrawer";
 
 function NavBar() {
-    const style = {
-        fontFamily: "Swiss721, sans-serif",
-        fontSize: "45px"
-    };
     const navVariants = {
         initial: {
             opacity: 0
@@ -31,10 +25,10 @@ function NavBar() {
             variants={navVariants}
             initial="initial"
             animate="final"
-            className={`${styles.navBar} z-20 fixed top-5 left-0 right-0 m-4 h-24 border border-[#d3d3d3] rounded-xl flex justify-between items-center bg-[#8785A2]`}
+            className="z-20 fixed top-5 left-0 right-0 m-4 h-24 border border-[#d3d3d3] rounded-xl flex justify-between items-center bg-[#8785A2]"
         >
             <div className="ml-6">
-                <Link to="/" style={style} className="text-4xl text-[#FFE2E2]">Urban Cart</Link>
+                <Link to="/" className="font-display text-2xl sm:text-3xl md:text-display-md text-[#FFE2E2]">Urban Cart</Link>
             </div>
             <div className="flex space-x-4 relative mr-6">
                 <CartDrawer.Trigger>

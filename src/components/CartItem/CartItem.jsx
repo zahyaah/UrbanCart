@@ -26,7 +26,7 @@ function CartItem({ item }) {
                 />
             </div>
             <div className="w-full md:w-3/5 pl-0 md:pl-4 flex flex-col justify-between">
-                <h2 className="text-lg md:text-xl font-semibold mb-2 break-words">
+                <h2 className="font-display text-lg md:text-xl mb-2 break-words">
                     {item.title}
                 </h2>
 

@@ -32,7 +32,7 @@ function PaymentStep({ initialValues, onSubmit, onBack }) {
 
     return (
         <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
-            <h2 className="text-xl font-semibold">Payment</h2>
+            <h2 className="font-display text-display-sm">Payment</h2>
             <p className="text-sm text-gray-500 bg-gray-50 border border-gray-200 rounded-md p-3">
                 This is a demo checkout. No real payment is processed and no card details are transmitted anywhere.
             </p>
@@ -45,10 +45,10 @@ function PaymentStep({ initialValues, onSubmit, onBack }) {
             </div>
 
             <div className="flex gap-3">
-                <button type="button" onClick={onBack} className="min-h-[44px] flex-1 border-2 border-black font-semibold rounded-md hover:bg-gray-100">
+                <button type="button" onClick={onBack} className="min-h-[44px] flex-1 border-2 border-black font-display tracking-wide rounded-md hover:bg-gray-100">
                     Back
                 </button>
-                <button type="submit" className="min-h-[44px] flex-1 bg-black text-white font-semibold rounded-md hover:bg-gray-800">
+                <button type="submit" className="min-h-[44px] flex-1 bg-black text-white font-display tracking-wide rounded-md hover:bg-gray-800">
                     Review Order
                 </button>
             </div>

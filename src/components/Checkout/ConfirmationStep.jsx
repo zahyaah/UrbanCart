@@ -7,7 +7,7 @@ function ConfirmationStep({ order }) {
 
     return (
         <div className="bg-white border border-gray-200 rounded-lg p-8 text-center space-y-4">
-            <h2 className="text-2xl font-semibold text-green-700">Order Placed!</h2>
+            <h2 className="font-display text-display-md text-green-700">Order Placed!</h2>
             <p className="text-gray-600">
                 Order number <span className="font-mono font-semibold">{order.orderNumber}</span>
             </p>
@@ -18,7 +18,7 @@ function ConfirmationStep({ order }) {
 
             <Link
                 to="/"
-                className="inline-flex min-h-[44px] px-6 items-center justify-center bg-black text-white font-semibold rounded-md hover:bg-gray-800"
+                className="inline-flex min-h-[44px] px-6 items-center justify-center bg-black text-white font-display tracking-wide rounded-md hover:bg-gray-800"
             >
                 Continue Shopping
             </Link>

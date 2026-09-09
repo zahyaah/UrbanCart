@@ -23,7 +23,7 @@ function OrderSummary({ mode = "cart", ctaLabel, onCtaClick }) {
 
     return (
         <div className="w-full md:w-5/6 lg:w-1/2 border border-gray-300 shadow-lg rounded-lg p-6 mb-4 bg-white">
-            <h2 className="text-xl font-semibold mb-6 text-gray-800">PRICE DETAILS ({itemCount} Items)</h2>
+            <h2 className="font-display text-display-sm mb-6 text-gray-800">PRICE DETAILS ({itemCount} Items)</h2>
             <div className="space-y-3">
                 <div className="flex justify-between text-gray-600">
                     <span>Total MRP</span>
@@ -53,7 +53,7 @@ function OrderSummary({ mode = "cart", ctaLabel, onCtaClick }) {
             </div>
             {itemCount > 0 && (
                 <button
-                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 rounded-lg mt-6"
+                    className="min-h-[44px] w-full bg-yellow-500 hover:bg-yellow-600 text-white font-display tracking-wide py-3 rounded-lg mt-6"
                     onClick={handleClick}
                 >
                     {label}
