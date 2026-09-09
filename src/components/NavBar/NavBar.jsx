@@ -5,6 +5,7 @@ import CartSVG from "../../assets/Cart.svg";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom"
 import { selectCartItemCount } from "../../features/cart/cartSelectors";
+import CartDrawer from "../CartDrawer/CartDrawer";
 
 function NavBar() {
     const style = {
@@ -36,14 +37,16 @@ function NavBar() {
                 <Link to="/" style={style} className="text-4xl text-[#FFE2E2]">Urban Cart</Link>
             </div>
             <div className="flex space-x-4 relative mr-6">
-                <Link to="/cart" className="relative min-h-[44px] min-w-[44px] flex items-center justify-center">
-                    <img src={CartSVG} alt="Cart" />
-                    {cartItemCount !== 0 ? (
-                        <div className="absolute -bottom-1 -right-1 bg-[#FFC7C7] text-white text-xs rounded-full h-[25px] w-[25px] flex items-center justify-center">
-                            {cartItemCount}
-                        </div>
-                    ) : null}
-                </Link>
+                <CartDrawer.Trigger>
+                    <span className="relative flex items-center justify-center">
+                        <img src={CartSVG} alt="Cart" />
+                        {cartItemCount !== 0 ? (
+                            <div className="absolute -bottom-1 -right-1 bg-[#FFC7C7] text-white text-xs rounded-full h-[25px] w-[25px] flex items-center justify-center">
+                                {cartItemCount}
+                            </div>
+                        ) : null}
+                    </span>
+                </CartDrawer.Trigger>
             </div>
         </motion.div>
     );
