@@ -3,9 +3,26 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#FFF8EC" />
     <title>Urban Cart</title>
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem("urbancart-theme");
+          var isDark =
+            stored === "dark" ||
+            (stored !== "light" &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.classList.toggle("dark", isDark);
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute("content", isDark ? "#17110A" : "#FFF8EC");
+        } catch (e) {
+          // localStorage/matchMedia unavailable -- default light, no crash
+        }
+      })();
+    </script>
   </head>
-  <body class="bg-[#F6F6F6] h-screen w-full m-0 p-0">
+  <body class="m-0 p-0">
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

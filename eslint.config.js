@@ -35,4 +35,19 @@ export default [
       ],
     },
   },
+  {
+    // shadcn-generated primitives are vendored, not hand-authored app code --
+    // they ship for JS output with no PropTypes (written for TS consumers).
+    files: ['src/components/ui/**/*.jsx'],
+    rules: {
+      'react/prop-types': 'off',
+      'no-unused-vars': 'off',
+    },
+  },
+  {
+    files: ['*.config.js'],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
 ]

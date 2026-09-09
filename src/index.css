@@ -1,3 +1,6 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 @import "@fontsource/space-grotesk/500.css";
 @import "@fontsource/space-grotesk/600.css";
 @import "@fontsource/space-grotesk/700.css";
@@ -5,6 +8,125 @@
 @import "@fontsource/inter/500.css";
 @import "@fontsource/inter/600.css";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-display: "Space Grotesk", sans-serif;
+  --font-sans: "Inter", sans-serif;
+  --text-display-lg: 2.5rem;
+  --text-display-lg--line-height: 1.1;
+  --text-display-lg--font-weight: 700;
+  --text-display-md: 2rem;
+  --text-display-md--line-height: 1.15;
+  --text-display-md--font-weight: 600;
+  --text-display-sm: 1.5rem;
+  --text-display-sm--line-height: 1.2;
+  --text-display-sm--font-weight: 600;
+}
+
+:root {
+  --radius: 0.25rem;
+
+  /* Brand: DF301C red, FF9100 orange, FFF1D1 cream, 00B7CD teal.
+     DF301C is fill-only (buttons/borders/badges) -- never inline text,
+     it only clears AA contrast (4.5:1) with white foreground. */
+  --background: oklch(0.9813 0.0175 81.33); /* warm cream, near FFF1D1 */
+  --foreground: oklch(0.2175 0.0331 68.70); /* warm near-black */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2175 0.0331 68.70);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.2175 0.0331 68.70);
+  --primary: oklch(0.5885 0.2128 30.58); /* DF301C */
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.7141 0.1235 209.89); /* 00B7CD */
+  --secondary-foreground: oklch(0.2175 0.0331 68.70);
+  --accent: oklch(0.7586 0.1768 60.64); /* FF9100 */
+  --accent-foreground: oklch(0.2175 0.0331 68.70);
+  --muted: oklch(0.9231 0.0428 84.57);
+  --muted-foreground: oklch(0.4793 0.0478 81.95);
+  --destructive: oklch(0.5885 0.2128 30.58); /* DF301C */
+  --destructive-foreground: oklch(1 0 0);
+  --success: oklch(0.5234 0.1347 144.17); /* utility green -- not in brand palette, no brand color reads as "success" */
+  --success-foreground: oklch(1 0 0);
+  --border: oklch(0.8808 0.0563 86.63);
+  --input: oklch(0.8808 0.0563 86.63);
+  --ring: oklch(0.7141 0.1235 209.89); /* teal -- distinct from primary/accent */
+}
+
+.dark {
+  --background: oklch(0.1829 0.0167 70.78); /* warm near-black, not cool slate */
+  --foreground: oklch(0.9610 0.0444 87.19); /* FFF1D1, role-flipped to text */
+  --card: oklch(0.2296 0.0242 71.75);
+  --card-foreground: oklch(0.9610 0.0444 87.19);
+  --popover: oklch(0.2296 0.0242 71.75);
+  --popover-foreground: oklch(0.9610 0.0444 87.19);
+  --primary: oklch(0.5885 0.2128 30.58); /* DF301C -- unchanged, fill contrast is self-contained */
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.7141 0.1235 209.89);
+  --secondary-foreground: oklch(0.1829 0.0167 70.78);
+  --accent: oklch(0.7586 0.1768 60.64);
+  --accent-foreground: oklch(0.1829 0.0167 70.78);
+  --muted: oklch(0.2528 0.0282 70.66);
+  --muted-foreground: oklch(0.7381 0.0470 82.51);
+  --destructive: oklch(0.5885 0.2128 30.58);
+  --destructive-foreground: oklch(1 0 0);
+  --success: oklch(0.6731 0.1624 144.21); /* brighter for dark-bg contrast */
+  --success-foreground: oklch(0.1829 0.0167 70.78);
+  --border: oklch(0.3037 0.0383 75.37);
+  --input: oklch(0.3037 0.0383 75.37);
+  --ring: oklch(0.7141 0.1235 209.89);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: 0.125rem;
+  --radius-md: 0.1875rem;
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.375rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+  html {
+    color-scheme: light;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
