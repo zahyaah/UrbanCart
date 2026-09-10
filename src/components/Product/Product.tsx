@@ -27,19 +27,19 @@ function ProductSkeleton() {
 
 function Product() {
     const prefersReducedMotion = useReducedMotion();
-    const params = useParams();
-    const id = parseInt(params.id, 10);
+    const params = useParams<{ id: string }>();
+    const id = parseInt(params.id ?? "", 10);
 
     const { data, isLoading, isError } = useGetProductByIdQuery(id, {
         skip: Number.isNaN(id),
     });
-    const notFound = Number.isNaN(id) || isError || (!isLoading && !data);
 
     const { addProductToCart } = useAddToCart();
 
     const handleAddToCart = () => {
+        if (!data) return;
         addProductToCart({
-            id: parseInt(data.id, 10),
+            id: data.id,
             title: data.title,
             price: data.price,
             image: data.image,
@@ -47,7 +47,13 @@ function Product() {
     }
 
     if (isLoading) return <ProductSkeleton />;
-    if (notFound) return <ErrorPage errorMessage="Product not found" />;
+    // isLoading is false past this point, so the earlier "still loading"
+    // case is already ruled out -- !data here means the fetch genuinely
+    // came back empty. Checking `!data` directly (rather than a separately
+    // computed boolean) is also what lets TS narrow `data` for the JSX below.
+    if (Number.isNaN(id) || isError || !data) {
+        return <ErrorPage errorMessage="Product not found" />;
+    }
 
     return (
         <motion.div
