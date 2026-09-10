@@ -42,7 +42,7 @@ function AddressStep({ initialValues, onSubmit }) {
     };
 
     return (
-        <Card className="border-2 border-foreground p-6">
+        <Card className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
                 <h2 className="font-display text-display-sm">Shipping Address</h2>
 
@@ -57,7 +57,7 @@ function AddressStep({ initialValues, onSubmit }) {
                     <FormField label="Country" name="country" autoComplete="country-name" value={values.country} error={errors.country} onChange={handleChange} />
                 </div>
 
-                <Button type="submit" className="min-h-[44px] w-full font-display tracking-wide">
+                <Button type="submit" className="min-h-[44px] w-full tracking-wide">
                     Continue to Payment
                 </Button>
             </form>

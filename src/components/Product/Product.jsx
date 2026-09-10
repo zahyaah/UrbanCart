@@ -1,20 +1,24 @@
 import { useParams } from "react-router-dom"
+import { motion, useReducedMotion } from "framer-motion"
 import ErrorPage from "../ErrorPage/ErrorPage"
 import { useAddToCart } from "../../hooks/useAddToCart"
 import { useGetProductByIdQuery } from "../../features/products/productsApi"
+import { Card } from "../ui/card"
 import { Button } from "../ui/button"
 import { Badge } from "../ui/badge"
 import { Skeleton } from "../ui/skeleton"
+import { staggerContainer, fadeUp, scaleIn, reduce } from "../../lib/motion"
 
 function ProductSkeleton() {
     return (
-        <div className="flex h-[calc(100vh-11rem)] flex-col gap-4 md:flex-row">
-            <Skeleton className="w-full rounded-md border-2 border-foreground md:h-[500px] md:w-1/2" />
-            <div className="w-full space-y-3 rounded-md border-2 border-foreground p-6 md:w-1/2">
-                <Skeleton className="h-8 w-3/4" />
+        <div className="flex flex-col gap-6 pb-10 md:flex-row">
+            <Skeleton className="aspect-square w-full rounded-lg md:w-1/2" />
+            <div className="w-full space-y-3 md:w-1/2">
+                <Skeleton className="h-9 w-3/4" />
                 <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-5/6" />
                 <Skeleton className="h-4 w-2/3" />
-                <Skeleton className="h-6 w-1/4" />
+                <Skeleton className="h-7 w-24" />
                 <Skeleton className="h-11 w-full" />
             </div>
         </div>
@@ -22,6 +26,7 @@ function ProductSkeleton() {
 }
 
 function Product() {
+    const prefersReducedMotion = useReducedMotion();
     const params = useParams();
     const id = parseInt(params.id, 10);
 
@@ -41,35 +46,67 @@ function Product() {
         });
     }
 
+    if (isLoading) return <ProductSkeleton />;
+    if (notFound) return <ErrorPage errorMessage="Product not found" />;
+
     return (
-        <>
-            {isLoading ? (
-                <ProductSkeleton />
-            ) : notFound ? (
-                <ErrorPage errorMessage="Product not found" />
-            ) : (
-                <>
-                    <div key={data.id} className="h-[calc(100vh-11rem)] flex flex-col md:flex-row md:gap-4">
-                        <section className="w-full md:w-1/2">
-                            <img src={data.image} alt={data.title} width={600} height={600} className="border-foreground bg-card border-2 w-full h-auto p-4 md:h-[500px] object-contain rounded-md"/>
-                        </section>
-
-                        <aside className="h-fit w-full md:w-1/2 md:mt-0 md:ml-4 p-6 border-foreground border-2 rounded-md bg-card">
-                            <h2 className="font-display text-display-sm">{data.title}</h2>
-                            <p className="text-base sm:text-xl text-muted-foreground mt-2">{data.description}</p>
-                            <Badge className="mt-3 bg-accent text-accent-foreground text-base px-3 py-1">${data.price}</Badge>
-
-                            <Button
-                                className="min-h-[44px] w-full mt-4 font-display tracking-wide"
-                                onClick={handleAddToCart}
-                            >
-                                ADD TO CART
-                            </Button>
-                        </aside>
+        <motion.div
+            key={data.id}
+            variants={reduce(staggerContainer, prefersReducedMotion)}
+            initial="hidden"
+            animate="show"
+            className="flex flex-col gap-6 pb-10 md:flex-row md:gap-10"
+        >
+            <motion.section
+                variants={reduce(scaleIn, prefersReducedMotion)}
+                className="w-full md:w-1/2"
+            >
+                <Card className="overflow-hidden p-0">
+                    <div className="mx-auto aspect-square w-full max-h-[28rem] md:max-h-[32rem]">
+                        <img
+                            src={data.image}
+                            alt={data.title}
+                            width={600}
+                            height={600}
+                            className="h-full w-full object-contain p-6"
+                        />
                     </div>
-                </>
-            )}
-        </>
+                </Card>
+            </motion.section>
+
+            <div className="flex w-full flex-col justify-center md:w-1/2">
+                <motion.h1
+                    variants={reduce(fadeUp, prefersReducedMotion)}
+                    className="font-display text-display-sm sm:text-display-md"
+                >
+                    {data.title}
+                </motion.h1>
+
+                {/* shadcn Badge is a fixed h-5; bumping the font past that clips
+                    the glyphs, so grow the box with the text instead. */}
+                <motion.div variants={reduce(fadeUp, prefersReducedMotion)} className="mt-3">
+                    <Badge variant="secondary" className="h-auto px-3 py-1 font-display text-base leading-normal">
+                        ${data.price}
+                    </Badge>
+                </motion.div>
+
+                <motion.p
+                    variants={reduce(fadeUp, prefersReducedMotion)}
+                    className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base"
+                >
+                    {data.description}
+                </motion.p>
+
+                <motion.div variants={reduce(fadeUp, prefersReducedMotion)}>
+                    <Button
+                        className="mt-6 min-h-[44px] w-full tracking-wide"
+                        onClick={handleAddToCart}
+                    >
+                        ADD TO CART
+                    </Button>
+                </motion.div>
+            </div>
+        </motion.div>
     )
 }
 

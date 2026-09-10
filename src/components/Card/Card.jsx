@@ -4,19 +4,10 @@ import PropTypes from "prop-types"
 import { useAddToCart } from "../../hooks/useAddToCart"
 import { Card as UICard } from "../ui/card"
 import { Button } from "../ui/button"
-import { Badge } from "../ui/badge"
+import { fadeUp, reduce, EASE } from "../../lib/motion"
 
 function Card(props) {
     const prefersReducedMotion = useReducedMotion();
-    const cardVariants = {
-        whileHover: prefersReducedMotion
-            ? {}
-            : {
-                scale: 1.03,
-                boxShadow: "0 12px 24px -8px rgba(0,0,0,0.35)"
-              },
-    };
-
     const { addProductToCart } = useAddToCart();
 
     const handleAddToCart = () => {
@@ -29,27 +20,43 @@ function Card(props) {
     }
 
     return (
-        <motion.div variants={cardVariants} whileHover="whileHover" className="w-full">
-            <UICard className="gap-0 overflow-hidden rounded-lg border-2 border-foreground py-0">
-                <Link to={`/product/${parseInt(props.id, 10)}`} className="block">
-                    <div className="aspect-square w-full border-b-2 border-foreground bg-card">
-                        <img src={props.image} alt={props.title} width={400} height={400} className="h-full w-full object-contain p-4" />
+        <motion.div
+            variants={reduce(fadeUp, prefersReducedMotion)}
+            whileHover={prefersReducedMotion ? undefined : { y: -6 }}
+            transition={{ duration: 0.3, ease: EASE }}
+            className="h-full"
+        >
+            <UICard className="group/card h-full gap-0 overflow-hidden py-0 transition-shadow duration-300 hover:shadow-lg">
+                <Link to={`/product/${parseInt(props.id, 10)}`} className="block overflow-hidden">
+                    <div className="aspect-square w-full overflow-hidden bg-card">
+                        <motion.img
+                            src={props.image}
+                            alt={props.title}
+                            width={400}
+                            height={400}
+                            className="h-full w-full object-contain p-3"
+                            whileHover={prefersReducedMotion ? undefined : { scale: 1.07 }}
+                            transition={{ duration: 0.45, ease: EASE }}
+                        />
                     </div>
                 </Link>
 
-                <div className="flex items-start justify-between gap-2 p-3">
-                    <h3 className="font-display text-base leading-tight sm:text-lg">
-                        {props.title.length >= 15 ? props.title.slice(0, 15) + "…" : props.title}
+                <div className="flex flex-1 flex-col gap-1.5 px-2.5 pt-2 pb-2.5 sm:px-3">
+                    <h3 className="line-clamp-2 break-words text-xs leading-normal sm:text-sm">
+                        {props.title}
                     </h3>
-                    <Badge className="shrink-0 bg-accent text-accent-foreground">${props.price}</Badge>
-                </div>
+                    <p className="font-display text-sm sm:text-base">
+                        ${props.price}
+                    </p>
 
-                <Button
-                    className="min-h-[44px] w-full rounded-none border-t-2 border-foreground font-display tracking-wide"
-                    onClick={handleAddToCart}
-                >
-                    ADD TO CART
-                </Button>
+                    <Button
+                        size="sm"
+                        className="mt-auto min-h-[44px] w-full text-[11px] tracking-wide sm:text-xs"
+                        onClick={handleAddToCart}
+                    >
+                        ADD TO CART
+                    </Button>
+                </div>
             </UICard>
         </motion.div>
     );

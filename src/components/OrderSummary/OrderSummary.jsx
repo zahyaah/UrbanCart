@@ -26,8 +26,8 @@ function OrderSummary({ mode = "cart", ctaLabel, onCtaClick }) {
     };
 
     return (
-        <Card className="w-full md:w-5/6 lg:w-1/2 border-2 border-foreground p-6 mb-4">
-            <h2 className="font-display text-display-sm mb-6">PRICE DETAILS ({itemCount} Items)</h2>
+        <Card className="w-full p-6">
+            <h2 className="mb-6 font-display text-xl">Price Details ({itemCount} items)</h2>
             <div className="space-y-3">
                 <div className="flex justify-between text-muted-foreground">
                     <span>Total MRP</span>
@@ -57,7 +57,7 @@ function OrderSummary({ mode = "cart", ctaLabel, onCtaClick }) {
             </div>
             {itemCount > 0 && (
                 <Button
-                    className="min-h-[44px] w-full mt-6 bg-accent text-accent-foreground hover:bg-accent/90 font-display tracking-wide"
+                    className="mt-6 min-h-[44px] w-full tracking-wide"
                     onClick={handleClick}
                 >
                     {label}

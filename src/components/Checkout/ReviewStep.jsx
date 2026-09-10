@@ -11,7 +11,7 @@ function ReviewStep({ address, payment, onBack, onPlaceOrder }) {
 
     return (
         <div className="space-y-6">
-            <Card className="border-2 border-foreground p-6 space-y-4">
+            <Card className="p-6 space-y-4">
                 <h2 className="font-display text-display-sm">Review Your Order</h2>
 
                 <div>
@@ -33,7 +33,7 @@ function ReviewStep({ address, payment, onBack, onPlaceOrder }) {
                     type="button"
                     variant="outline"
                     onClick={onBack}
-                    className="min-h-[44px] w-full font-display tracking-wide"
+                    className="min-h-[44px] w-full tracking-wide"
                 >
                     Back
                 </Button>

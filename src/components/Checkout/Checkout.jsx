@@ -1,6 +1,8 @@
 import { useReducer } from "react";
 import { Navigate } from "react-router-dom";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
+import { stepTransition, reduce } from "../../lib/motion";
 import { clearCart } from "../../features/cart/cartSlice";
 import { selectCartItemCount, selectCartItems, selectCartSubtotal } from "../../features/cart/cartSelectors";
 import StepIndicator from "./StepIndicator";
@@ -38,6 +40,7 @@ function wizardReducer(state, action) {
 
 function Checkout() {
     const [state, dispatchWizard] = useReducer(wizardReducer, initialWizardState);
+    const prefersReducedMotion = useReducedMotion();
     const dispatch = useDispatch();
     const itemCount = useSelector(selectCartItemCount);
     const items = useSelector(selectCartItems);
@@ -59,31 +62,41 @@ function Checkout() {
     }
 
     return (
-        <div className="max-w-3xl mx-auto pb-12">
+        <div className="mx-auto max-w-3xl pb-12">
             {state.step !== "confirmation" && <StepIndicator currentStep={state.step} />}
 
-            {state.step === "address" && (
-                <AddressStep
-                    initialValues={state.address}
-                    onSubmit={(values) => dispatchWizard({ type: "SUBMIT_ADDRESS", payload: values })}
-                />
-            )}
-            {state.step === "payment" && (
-                <PaymentStep
-                    initialValues={state.payment}
-                    onSubmit={(values) => dispatchWizard({ type: "SUBMIT_PAYMENT", payload: values })}
-                    onBack={() => dispatchWizard({ type: "BACK_TO_ADDRESS" })}
-                />
-            )}
-            {state.step === "review" && (
-                <ReviewStep
-                    address={state.address}
-                    payment={state.payment}
-                    onBack={() => dispatchWizard({ type: "BACK_TO_PAYMENT" })}
-                    onPlaceOrder={handlePlaceOrder}
-                />
-            )}
-            {state.step === "confirmation" && <ConfirmationStep order={state.placedOrder} />}
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key={state.step}
+                    variants={reduce(stepTransition, prefersReducedMotion)}
+                    initial="hidden"
+                    animate="show"
+                    exit="exit"
+                >
+                    {state.step === "address" && (
+                        <AddressStep
+                            initialValues={state.address}
+                            onSubmit={(values) => dispatchWizard({ type: "SUBMIT_ADDRESS", payload: values })}
+                        />
+                    )}
+                    {state.step === "payment" && (
+                        <PaymentStep
+                            initialValues={state.payment}
+                            onSubmit={(values) => dispatchWizard({ type: "SUBMIT_PAYMENT", payload: values })}
+                            onBack={() => dispatchWizard({ type: "BACK_TO_ADDRESS" })}
+                        />
+                    )}
+                    {state.step === "review" && (
+                        <ReviewStep
+                            address={state.address}
+                            payment={state.payment}
+                            onBack={() => dispatchWizard({ type: "BACK_TO_PAYMENT" })}
+                            onPlaceOrder={handlePlaceOrder}
+                        />
+                    )}
+                    {state.step === "confirmation" && <ConfirmationStep order={state.placedOrder} />}
+                </motion.div>
+            </AnimatePresence>
         </div>
     );
 }

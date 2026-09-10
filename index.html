@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#FFF8EC" />
+    <meta name="theme-color" content="#F4E9D7" />
     <title>Urban Cart</title>
     <script>
       (function () {
@@ -15,7 +15,7 @@
               window.matchMedia("(prefers-color-scheme: dark)").matches);
           document.documentElement.classList.toggle("dark", isDark);
           var meta = document.querySelector('meta[name="theme-color"]');
-          if (meta) meta.setAttribute("content", isDark ? "#17110A" : "#FFF8EC");
+          if (meta) meta.setAttribute("content", isDark ? "#37353E" : "#F4E9D7");
         } catch (e) {
           // localStorage/matchMedia unavailable -- default light, no crash
         }

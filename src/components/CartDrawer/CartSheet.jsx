@@ -81,10 +81,10 @@ function CartSheet({ open, onOpenChange }) {
                             <span>Subtotal</span>
                             <span>$ {subtotal.toFixed(2)}</span>
                         </div>
-                        <Button asChild variant="outline" className="min-h-[44px] font-display tracking-wide">
+                        <Button asChild variant="outline" className="min-h-[44px] tracking-wide">
                             <Link to="/cart" onClick={() => onOpenChange(false)}>VIEW CART</Link>
                         </Button>
-                        <Button asChild className="min-h-[44px] bg-accent text-accent-foreground font-display tracking-wide hover:bg-accent/90">
+                        <Button asChild className="min-h-[44px] tracking-wide">
                             <Link to="/checkout" onClick={() => onOpenChange(false)}>CHECKOUT</Link>
                         </Button>
                     </SheetFooter>

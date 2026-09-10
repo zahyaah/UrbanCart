@@ -1,45 +1,68 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import PropTypes from "prop-types";
 import { Moon, ShoppingCart, Sun } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import { selectCartItemCount } from "../../features/cart/cartSelectors";
 import { useTheme } from "../../providers/ThemeProvider";
 import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
+import { EASE } from "../../lib/motion";
 
 function NavBar({ onOpenCart }) {
     const prefersReducedMotion = useReducedMotion();
-    const navVariants = {
-        initial: { opacity: prefersReducedMotion ? 1 : 0 },
-        final: { opacity: 1, transition: { duration: prefersReducedMotion ? 0 : 0.6 } },
-    };
-
     const cartItemCount = useSelector(selectCartItemCount);
     const { theme, toggleTheme } = useTheme();
+    const [scrolled, setScrolled] = useState(false);
+
+    // Condense the bar once the page scrolls, so it recedes behind content.
+    useEffect(() => {
+        const onScroll = () => setScrolled(window.scrollY > 12);
+        onScroll();
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return () => window.removeEventListener("scroll", onScroll);
+    }, []);
 
     return (
         <motion.header
-            variants={navVariants}
-            initial="initial"
-            animate="final"
-            className="fixed top-5 left-0 right-0 z-20 mx-4 flex h-16 items-center justify-between rounded-xl border-2 border-foreground bg-primary px-6 shadow-[4px_4px_0_0_var(--foreground)]"
+            initial={prefersReducedMotion ? false : { y: -24, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5, ease: EASE }}
+            className={`fixed inset-x-0 top-4 z-20 mx-4 flex items-center justify-between rounded-xl border border-border px-4 backdrop-blur-md transition-[height,background-color,box-shadow] duration-300 sm:px-6 ${
+                scrolled
+                    ? "h-14 bg-card/85 shadow-md"
+                    : "h-16 bg-card/60 shadow-sm"
+            }`}
         >
-            <Link to="/" className="font-display text-2xl sm:text-3xl md:text-display-md text-primary-foreground">
+            <Link
+                to="/"
+                className="font-display text-xl tracking-wide transition-opacity hover:opacity-70 sm:text-2xl md:text-display-sm"
+            >
                 Urban Cart
             </Link>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
                 <Button
                     type="button"
                     variant="ghost"
                     size="icon"
                     onClick={toggleTheme}
                     aria-label="Toggle dark mode"
-                    className="min-h-[44px] min-w-[44px] text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground"
+                    className="min-h-[44px] min-w-[44px]"
                 >
-                    {theme === "dark" ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
+                    <AnimatePresence mode="wait" initial={false}>
+                        <motion.span
+                            key={theme}
+                            initial={prefersReducedMotion ? false : { rotate: -90, opacity: 0 }}
+                            animate={{ rotate: 0, opacity: 1 }}
+                            exit={prefersReducedMotion ? { opacity: 0 } : { rotate: 90, opacity: 0 }}
+                            transition={{ duration: 0.25, ease: EASE }}
+                            className="flex items-center justify-center"
+                        >
+                            {theme === "dark" ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
+                        </motion.span>
+                    </AnimatePresence>
                 </Button>
 
                 <Button
@@ -48,17 +71,24 @@ function NavBar({ onOpenCart }) {
                     size="icon"
                     onClick={onOpenCart}
                     aria-label={`Open cart, ${cartItemCount} item${cartItemCount === 1 ? "" : "s"}`}
-                    className="relative min-h-[44px] min-w-[44px] text-primary-foreground hover:bg-primary-foreground/15 hover:text-primary-foreground"
+                    className="relative min-h-[44px] min-w-[44px]"
                 >
                     <ShoppingCart aria-hidden="true" />
-                    {cartItemCount !== 0 && (
-                        <Badge
-                            aria-live="polite"
-                            className="absolute -top-1 -right-1 h-5 min-w-5 justify-center rounded-full border border-foreground bg-accent px-1 text-accent-foreground"
-                        >
-                            {cartItemCount}
-                        </Badge>
-                    )}
+                    <AnimatePresence>
+                        {cartItemCount !== 0 && (
+                            <motion.span
+                                key="badge"
+                                initial={prefersReducedMotion ? { opacity: 0 } : { scale: 0, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={prefersReducedMotion ? { opacity: 0 } : { scale: 0, opacity: 0 }}
+                                transition={{ type: "spring", stiffness: 500, damping: 25 }}
+                                aria-live="polite"
+                                className="absolute -top-0.5 -right-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] text-primary-foreground"
+                            >
+                                {cartItemCount}
+                            </motion.span>
+                        )}
+                    </AnimatePresence>
                 </Button>
             </div>
         </motion.header>

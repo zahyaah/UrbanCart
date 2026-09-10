@@ -41,7 +41,7 @@ function PaymentStep({ initialValues, onSubmit, onBack }) {
     };
 
     return (
-        <Card className="border-2 border-foreground p-6">
+        <Card className="p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
                 <h2 className="font-display text-display-sm">Payment</h2>
                 <Alert>
@@ -59,10 +59,10 @@ function PaymentStep({ initialValues, onSubmit, onBack }) {
                 </div>
 
                 <div className="flex gap-3">
-                    <Button type="button" variant="outline" onClick={onBack} className="min-h-[44px] flex-1 font-display tracking-wide">
+                    <Button type="button" variant="outline" onClick={onBack} className="min-h-[44px] flex-1 tracking-wide">
                         Back
                     </Button>
-                    <Button type="submit" className="min-h-[44px] flex-1 font-display tracking-wide">
+                    <Button type="submit" className="min-h-[44px] flex-1 tracking-wide">
                         Review Order
                     </Button>
                 </div>

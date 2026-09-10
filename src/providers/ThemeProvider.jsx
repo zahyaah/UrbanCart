@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 
 const STORAGE_KEY = "urbancart-theme";
-const THEME_COLOR = { light: "#FFF8EC", dark: "#17110A" };
+const THEME_COLOR = { light: "#F4E9D7", dark: "#37353E" };
 
 const ThemeContext = createContext(null);
 

@@ -14,7 +14,8 @@ createRoot(document.getElementById('root')).render(
       <ThemeProvider>
         <Provider store={store}>
           <App />
-          <Toaster />
+          {/* top-center so it never covers the cart sheet's footer CTAs */}
+          <Toaster position="top-center" />
         </Provider>
       </ThemeProvider>
     </ErrorBoundary>
