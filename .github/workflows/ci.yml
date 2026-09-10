@@ -15,10 +15,10 @@ env:
   NODE_VERSION: '22'
 
 jobs:
-  # Lint, unit tests and build run as one job: each takes seconds, so three
-  # separate jobs would spend more time on checkout and npm ci than on work.
+  # Lint, typecheck, unit tests and build run as one job: each takes seconds,
+  # so separate jobs would spend more time on checkout and npm ci than on work.
   quality:
-    name: Lint, unit tests, build
+    name: Lint, typecheck, unit tests, build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -32,6 +32,9 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
 
       - name: Unit tests with coverage
         run: npm run coverage

@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    /* Bundler mode -- matches how Vite resolves and transpiles modules */
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    /* Incremental migration: .js/.jsx files are included for resolution but
+       not type-checked. Converted files drop the "check" restriction by
+       simply becoming .ts/.tsx -- no per-file opt-in needed. */
+    "allowJs": true,
+    "checkJs": false,
+
+    /* Strict by default for every .ts/.tsx file */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src"]
+}
