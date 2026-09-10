@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
+import { useLocation, useOutlet } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import NavBar from "../NavBar/NavBar";
 import Footer from "../Footer/Footer";
@@ -10,6 +10,12 @@ function Layout() {
     const [cartOpen, setCartOpen] = useState(false);
     const location = useLocation();
     const prefersReducedMotion = useReducedMotion();
+    // A concrete element, not <Outlet />. <Outlet /> resolves the route from
+    // context at render time, so the page that is animating OUT would swap to
+    // the incoming page's content mid-exit -- mounting every page twice and
+    // discarding anything typed during the transition. AnimatePresence caches
+    // this element, so the exiting subtree keeps rendering the page it owns.
+    const outlet = useOutlet();
 
     // Auto-close whenever the route changes (e.g. "View Cart"/"Checkout" links).
     useEffect(() => {
@@ -29,7 +35,7 @@ function Layout() {
                         animate="show"
                         exit="exit"
                     >
-                        <Outlet />
+                        {outlet}
                     </motion.div>
                 </AnimatePresence>
             </main>
