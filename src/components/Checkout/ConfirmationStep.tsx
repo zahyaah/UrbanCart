@@ -1,10 +1,9 @@
 import { Link } from "react-router-dom";
-import PropTypes from "prop-types";
-import { cartItemPropType } from "../../features/cart/cartItemPropType";
+import type { PlacedOrder } from "./checkoutTypes";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 
-function ConfirmationStep({ order }) {
+function ConfirmationStep({ order }: { order: PlacedOrder | null }) {
     if (!order) return null;
 
     const itemCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
@@ -26,13 +25,5 @@ function ConfirmationStep({ order }) {
         </Card>
     );
 }
-
-ConfirmationStep.propTypes = {
-    order: PropTypes.shape({
-        items: PropTypes.arrayOf(cartItemPropType).isRequired,
-        subtotal: PropTypes.number.isRequired,
-        orderNumber: PropTypes.string.isRequired,
-    }),
-};
 
 export default ConfirmationStep;

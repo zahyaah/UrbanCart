@@ -1,14 +1,16 @@
-import PropTypes from "prop-types";
 import { Separator } from "../ui/separator";
+import type { WizardStep } from "./checkoutTypes";
 
-const STEP_LABELS = {
+type ActiveStep = Exclude<WizardStep, "confirmation">;
+
+const STEP_LABELS: Record<ActiveStep, string> = {
     address: "Address",
     payment: "Payment",
     review: "Review",
 };
-const STEP_ORDER = ["address", "payment", "review"];
+const STEP_ORDER: ActiveStep[] = ["address", "payment", "review"];
 
-function StepIndicator({ currentStep }) {
+function StepIndicator({ currentStep }: { currentStep: ActiveStep }) {
     const currentIndex = STEP_ORDER.indexOf(currentStep);
 
     return (
@@ -41,9 +43,5 @@ function StepIndicator({ currentStep }) {
         </ol>
     );
 }
-
-StepIndicator.propTypes = {
-    currentStep: PropTypes.oneOf(STEP_ORDER).isRequired,
-};
 
 export default StepIndicator;

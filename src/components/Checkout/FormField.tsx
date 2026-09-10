@@ -1,8 +1,16 @@
-import PropTypes from "prop-types";
+import type { ChangeEvent, InputHTMLAttributes } from "react";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 
-function FormField({ label, name, value, error, onChange, placeholder, type = "text", ...inputProps }) {
+interface FormFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "name" | "id"> {
+    label: string;
+    name: string;
+    value: string;
+    error?: string;
+    onChange: (event: ChangeEvent<HTMLInputElement>) => void;
+}
+
+function FormField({ label, name, value, error, onChange, placeholder, type = "text", ...inputProps }: FormFieldProps) {
     return (
         <div className="space-y-1.5">
             <Label htmlFor={name}>{label}</Label>
@@ -21,15 +29,5 @@ function FormField({ label, name, value, error, onChange, placeholder, type = "t
         </div>
     );
 }
-
-FormField.propTypes = {
-    label: PropTypes.string.isRequired,
-    name: PropTypes.string.isRequired,
-    value: PropTypes.string.isRequired,
-    error: PropTypes.string,
-    onChange: PropTypes.func.isRequired,
-    placeholder: PropTypes.string,
-    type: PropTypes.string,
-};
 
 export default FormField;

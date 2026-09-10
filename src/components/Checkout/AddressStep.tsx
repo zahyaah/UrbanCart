@@ -1,11 +1,11 @@
-import PropTypes from "prop-types";
+import type { FormEvent } from "react";
 import { useCheckoutForm } from "../../hooks/useCheckoutForm";
 import FormField from "./FormField";
-import { addressPropType } from "./checkoutPropTypes";
+import type { Address } from "./checkoutTypes";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 
-const EMPTY_ADDRESS = {
+const EMPTY_ADDRESS: Address = {
     fullName: "",
     addressLine1: "",
     city: "",
@@ -14,8 +14,8 @@ const EMPTY_ADDRESS = {
     country: "",
 };
 
-function validateAddress(values) {
-    const errors = {};
+function validateAddress(values: Address) {
+    const errors: Partial<Record<keyof Address, string>> = {};
     if (!values.fullName.trim()) errors.fullName = "Full name is required";
     if (!values.addressLine1.trim()) errors.addressLine1 = "Address is required";
     if (!values.city.trim()) errors.city = "City is required";
@@ -24,13 +24,18 @@ function validateAddress(values) {
     return errors;
 }
 
-function AddressStep({ initialValues, onSubmit }) {
+interface AddressStepProps {
+    initialValues: Address | null;
+    onSubmit: (values: Address) => void;
+}
+
+function AddressStep({ initialValues, onSubmit }: AddressStepProps) {
     const { values, errors, handleChange, validateAll } = useCheckoutForm(
         initialValues || EMPTY_ADDRESS,
         validateAddress
     );
 
-    const handleSubmit = (event) => {
+    const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const validationErrors = validateAll();
         const firstErrorField = Object.keys(validationErrors)[0];
@@ -64,10 +69,5 @@ function AddressStep({ initialValues, onSubmit }) {
         </Card>
     );
 }
-
-AddressStep.propTypes = {
-    initialValues: addressPropType,
-    onSubmit: PropTypes.func.isRequired,
-};
 
 export default AddressStep;

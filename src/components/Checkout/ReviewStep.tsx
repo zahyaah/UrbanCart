@@ -1,10 +1,16 @@
-import PropTypes from "prop-types";
 import OrderSummary from "../OrderSummary/OrderSummary";
-import { addressPropType, paymentPropType } from "./checkoutPropTypes";
+import type { Address, Payment } from "./checkoutTypes";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 
-function ReviewStep({ address, payment, onBack, onPlaceOrder }) {
+interface ReviewStepProps {
+    address: Address | null;
+    payment: Payment | null;
+    onBack: () => void;
+    onPlaceOrder: () => void;
+}
+
+function ReviewStep({ address, payment, onBack, onPlaceOrder }: ReviewStepProps) {
     const maskedCardNumber = payment?.cardNumber
         ? `•••• •••• •••• ${payment.cardNumber.replace(/\s/g, "").slice(-4)}`
         : "";
@@ -43,12 +49,5 @@ function ReviewStep({ address, payment, onBack, onPlaceOrder }) {
         </div>
     );
 }
-
-ReviewStep.propTypes = {
-    address: addressPropType,
-    payment: paymentPropType,
-    onBack: PropTypes.func.isRequired,
-    onPlaceOrder: PropTypes.func.isRequired,
-};
 
 export default ReviewStep;

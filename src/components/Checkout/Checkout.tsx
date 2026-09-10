@@ -1,27 +1,42 @@
 import { useReducer } from "react";
 import { Navigate } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useDispatch, useSelector } from "react-redux";
 import { stepTransition, reduce } from "../../lib/motion";
 import { clearCart } from "../../features/cart/cartSlice";
 import { selectCartItemCount, selectCartItems, selectCartSubtotal } from "../../features/cart/cartSelectors";
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import StepIndicator from "./StepIndicator";
 import AddressStep from "./AddressStep";
 import PaymentStep from "./PaymentStep";
 import ReviewStep from "./ReviewStep";
 import ConfirmationStep from "./ConfirmationStep";
+import type { Address, Payment, PlacedOrder, WizardStep } from "./checkoutTypes";
 
-const initialWizardState = {
-    step: "address",
-    address: null,
-    payment: null,
+interface WizardState {
+    step: WizardStep;
+    address: Address | null;
+    payment: Payment | null;
     // Snapshot captured at place-order time -- the confirmation step must
     // render from this, not live cart selectors, since placing an order
     // clears the cart.
+    placedOrder: PlacedOrder | null;
+}
+
+type WizardAction =
+    | { type: "SUBMIT_ADDRESS"; payload: Address }
+    | { type: "SUBMIT_PAYMENT"; payload: Payment }
+    | { type: "BACK_TO_ADDRESS" }
+    | { type: "BACK_TO_PAYMENT" }
+    | { type: "PLACE_ORDER"; payload: PlacedOrder };
+
+const initialWizardState: WizardState = {
+    step: "address",
+    address: null,
+    payment: null,
     placedOrder: null,
 };
 
-function wizardReducer(state, action) {
+function wizardReducer(state: WizardState, action: WizardAction): WizardState {
     switch (action.type) {
         case "SUBMIT_ADDRESS":
             return { ...state, address: action.payload, step: "payment" };
@@ -41,10 +56,10 @@ function wizardReducer(state, action) {
 function Checkout() {
     const [state, dispatchWizard] = useReducer(wizardReducer, initialWizardState);
     const prefersReducedMotion = useReducedMotion();
-    const dispatch = useDispatch();
-    const itemCount = useSelector(selectCartItemCount);
-    const items = useSelector(selectCartItems);
-    const subtotal = useSelector(selectCartSubtotal);
+    const dispatch = useAppDispatch();
+    const itemCount = useAppSelector(selectCartItemCount);
+    const items = useAppSelector(selectCartItems);
+    const subtotal = useAppSelector(selectCartSubtotal);
 
     const handlePlaceOrder = () => {
         const orderNumber = `UC-${Date.now().toString(36).toUpperCase()}`;

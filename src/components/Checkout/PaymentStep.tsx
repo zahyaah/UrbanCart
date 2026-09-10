@@ -1,21 +1,21 @@
-import PropTypes from "prop-types";
+import type { FormEvent } from "react";
 import { Info } from "lucide-react";
 import { useCheckoutForm } from "../../hooks/useCheckoutForm";
 import FormField from "./FormField";
-import { paymentPropType } from "./checkoutPropTypes";
+import type { Payment } from "./checkoutTypes";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 import { Alert, AlertDescription } from "../ui/alert";
 
-const EMPTY_PAYMENT = {
+const EMPTY_PAYMENT: Payment = {
     cardholderName: "",
     cardNumber: "",
     expiry: "",
     cvc: "",
 };
 
-function validatePayment(values) {
-    const errors = {};
+function validatePayment(values: Payment) {
+    const errors: Partial<Record<keyof Payment, string>> = {};
     if (!values.cardholderName.trim()) errors.cardholderName = "Cardholder name is required";
     if (!/^\d{13,19}$/.test(values.cardNumber.replace(/\s/g, ""))) errors.cardNumber = "Enter a valid card number";
     if (!/^\d{2}\/\d{2}$/.test(values.expiry)) errors.expiry = "Use MM/YY format";
@@ -23,13 +23,19 @@ function validatePayment(values) {
     return errors;
 }
 
-function PaymentStep({ initialValues, onSubmit, onBack }) {
+interface PaymentStepProps {
+    initialValues: Payment | null;
+    onSubmit: (values: Payment) => void;
+    onBack: () => void;
+}
+
+function PaymentStep({ initialValues, onSubmit, onBack }: PaymentStepProps) {
     const { values, errors, handleChange, validateAll } = useCheckoutForm(
         initialValues || EMPTY_PAYMENT,
         validatePayment
     );
 
-    const handleSubmit = (event) => {
+    const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const validationErrors = validateAll();
         const firstErrorField = Object.keys(validationErrors)[0];
@@ -70,11 +76,5 @@ function PaymentStep({ initialValues, onSubmit, onBack }) {
         </Card>
     );
 }
-
-PaymentStep.propTypes = {
-    initialValues: paymentPropType,
-    onSubmit: PropTypes.func.isRequired,
-    onBack: PropTypes.func.isRequired,
-};
 
 export default PaymentStep;
