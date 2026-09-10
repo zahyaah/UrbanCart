@@ -62,7 +62,10 @@ function Checkout() {
     }
 
     return (
-        <div className="mx-auto max-w-3xl pb-12">
+        // Steps slide in horizontally; without clipping, that transform pushes
+        // a full-width card past the viewport edge on narrow screens and the
+        // page picks up a horizontal scrollbar for the length of the animation.
+        <div className="mx-auto max-w-3xl overflow-x-hidden pb-12">
             {state.step !== "confirmation" && <StepIndicator currentStep={state.step} />}
 
             <AnimatePresence mode="wait">
