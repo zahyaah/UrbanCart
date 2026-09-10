@@ -1,16 +1,14 @@
-import { useDispatch, useSelector } from "react-redux";
 import { Link } from "react-router-dom";
-import PropTypes from "prop-types";
 import { Minus, Plus } from "lucide-react";
 
-import { decrementQuantity, incrementQuantity, removeFromCart } from "../../features/cart/cartSlice";
+import { decrementQuantity, incrementQuantity, removeFromCart, type CartItem } from "../../features/cart/cartSlice";
 import { selectCartItems, selectCartSubtotal } from "../../features/cart/cartSelectors";
-import { cartItemPropType } from "../../features/cart/cartItemPropType";
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "../ui/sheet";
 import { Button } from "../ui/button";
 
-function CartSheetItem({ item }) {
-    const dispatch = useDispatch();
+function CartSheetItem({ item }: { item: CartItem }) {
+    const dispatch = useAppDispatch();
 
     return (
         <div className="flex items-center gap-3 border-b border-border pb-3">
@@ -52,13 +50,14 @@ function CartSheetItem({ item }) {
     );
 }
 
-CartSheetItem.propTypes = {
-    item: cartItemPropType.isRequired,
-};
+interface CartSheetProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+}
 
-function CartSheet({ open, onOpenChange }) {
-    const items = useSelector(selectCartItems);
-    const subtotal = useSelector(selectCartSubtotal);
+function CartSheet({ open, onOpenChange }: CartSheetProps) {
+    const items = useAppSelector(selectCartItems);
+    const subtotal = useAppSelector(selectCartSubtotal);
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>
@@ -93,10 +92,5 @@ function CartSheet({ open, onOpenChange }) {
         </Sheet>
     );
 }
-
-CartSheet.propTypes = {
-    open: PropTypes.bool.isRequired,
-    onOpenChange: PropTypes.func.isRequired,
-};
 
 export default CartSheet;

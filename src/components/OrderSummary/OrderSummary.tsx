@@ -1,15 +1,20 @@
-import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import PropTypes from "prop-types";
 import { selectCartItemCount, selectCartSubtotal } from "../../features/cart/cartSelectors";
+import { useAppSelector } from "../../redux/hooks";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 
-function OrderSummary({ mode = "cart", ctaLabel, onCtaClick }) {
+interface OrderSummaryProps {
+    mode?: "cart" | "checkout";
+    ctaLabel?: string;
+    onCtaClick?: () => void;
+}
+
+function OrderSummary({ mode = "cart", ctaLabel, onCtaClick }: OrderSummaryProps) {
     const navigate = useNavigate();
-    const itemCount = useSelector(selectCartItemCount);
-    const totalAmount = useSelector(selectCartSubtotal);
+    const itemCount = useAppSelector(selectCartItemCount);
+    const totalAmount = useAppSelector(selectCartSubtotal);
 
     const initialAmount = parseFloat(totalAmount.toFixed(2));
     const fivePercentDiscount = parseFloat((initialAmount * 0.05).toFixed(2));
@@ -66,11 +71,5 @@ function OrderSummary({ mode = "cart", ctaLabel, onCtaClick }) {
         </Card>
     );
 }
-
-OrderSummary.propTypes = {
-    mode: PropTypes.oneOf(["cart", "checkout"]),
-    ctaLabel: PropTypes.string,
-    onCtaClick: PropTypes.func,
-};
 
 export default OrderSummary;

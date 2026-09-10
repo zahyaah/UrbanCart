@@ -1,13 +1,13 @@
-import { useSelector } from "react-redux";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import CartItem from "../CartItem/CartItem";
 import OrderSummary from "../OrderSummary/OrderSummary";
 import { selectCartItems } from "../../features/cart/cartSelectors";
+import { useAppSelector } from "../../redux/hooks";
 import { staggerContainer, fadeUp, reduce } from "../../lib/motion";
 
 function Cart() {
     const prefersReducedMotion = useReducedMotion();
-    const items = useSelector(selectCartItems);
+    const items = useAppSelector(selectCartItems);
 
     return (
         <div className="pb-10">

@@ -1,14 +1,13 @@
-import { useDispatch } from "react-redux";
 import { motion, useReducedMotion } from "framer-motion";
 import { Minus, Plus, Trash2 } from "lucide-react";
-import { removeFromCart, incrementQuantity, decrementQuantity } from "../../features/cart/cartSlice";
-import { cartItemPropType } from "../../features/cart/cartItemPropType";
+import { removeFromCart, incrementQuantity, decrementQuantity, type CartItem as CartItemType } from "../../features/cart/cartSlice";
+import { useAppDispatch } from "../../redux/hooks";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 import { fadeUp, reduce, EASE } from "../../lib/motion";
 
-function CartItem({ item }) {
-    const dispatch = useDispatch();
+function CartItem({ item }: { item: CartItemType }) {
+    const dispatch = useAppDispatch();
     const prefersReducedMotion = useReducedMotion();
 
     const removeItem = () => {
@@ -90,9 +89,5 @@ function CartItem({ item }) {
         </motion.div>
     );
 }
-
-CartItem.propTypes = {
-    item: cartItemPropType.isRequired,
-};
 
 export default CartItem;
