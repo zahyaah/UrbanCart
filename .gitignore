@@ -28,3 +28,9 @@ dist-ssr
 .claude/
 skills-lock.json
 .vercel
+
+# Test output
+coverage
+playwright-report
+test-results
+.playwright
