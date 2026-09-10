@@ -1,18 +1,21 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useSelector } from "react-redux";
-import PropTypes from "prop-types";
 import { Moon, ShoppingCart, Sun } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 import { selectCartItemCount } from "../../features/cart/cartSelectors";
+import { useAppSelector } from "../../redux/hooks";
 import { useTheme } from "../../providers/ThemeProvider";
 import { Button } from "../ui/button";
 import { EASE } from "../../lib/motion";
 
-function NavBar({ onOpenCart }) {
+interface NavBarProps {
+    onOpenCart: () => void;
+}
+
+function NavBar({ onOpenCart }: NavBarProps) {
     const prefersReducedMotion = useReducedMotion();
-    const cartItemCount = useSelector(selectCartItemCount);
+    const cartItemCount = useAppSelector(selectCartItemCount);
     const { theme, toggleTheme } = useTheme();
     const [scrolled, setScrolled] = useState(false);
 
@@ -94,9 +97,5 @@ function NavBar({ onOpenCart }) {
         </motion.header>
     );
 }
-
-NavBar.propTypes = {
-    onOpenCart: PropTypes.func.isRequired,
-};
 
 export default NavBar;

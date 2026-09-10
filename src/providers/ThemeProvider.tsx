@@ -1,12 +1,19 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import PropTypes from "prop-types";
+import { createContext, useContext, useEffect, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
+
+type Theme = "light" | "dark";
+
+interface ThemeContextValue {
+    theme: Theme;
+    setTheme: Dispatch<SetStateAction<Theme>>;
+    toggleTheme: () => void;
+}
 
 const STORAGE_KEY = "urbancart-theme";
-const THEME_COLOR = { light: "#F4E9D7", dark: "#37353E" };
+const THEME_COLOR: Record<Theme, string> = { light: "#F4E9D7", dark: "#37353E" };
 
-const ThemeContext = createContext(null);
+const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-function getInitialTheme() {
+function getInitialTheme(): Theme {
     try {
         const stored = localStorage.getItem(STORAGE_KEY);
         if (stored === "light" || stored === "dark") return stored;
@@ -16,8 +23,8 @@ function getInitialTheme() {
     return window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
-export function ThemeProvider({ children }) {
-    const [theme, setTheme] = useState(getInitialTheme);
+export function ThemeProvider({ children }: { children: ReactNode }) {
+    const [theme, setTheme] = useState<Theme>(getInitialTheme);
 
     useEffect(() => {
         document.documentElement.classList.toggle("dark", theme === "dark");
@@ -39,11 +46,7 @@ export function ThemeProvider({ children }) {
     );
 }
 
-ThemeProvider.propTypes = {
-    children: PropTypes.node.isRequired,
-};
-
-export function useTheme() {
+export function useTheme(): ThemeContextValue {
     const context = useContext(ThemeContext);
     if (!context) {
         throw new Error("useTheme must be used within a ThemeProvider");

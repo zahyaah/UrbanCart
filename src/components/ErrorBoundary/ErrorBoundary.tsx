@@ -1,10 +1,17 @@
-import { Component } from "react";
-import PropTypes from "prop-types";
+import { Component, type ErrorInfo, type ReactNode } from "react";
+
+interface ErrorBoundaryProps {
+    children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+    hasError: boolean;
+}
 
 // React error boundaries must be class components -- there is no hook
 // equivalent (as of React 18).
-class ErrorBoundary extends Component {
-    constructor(props) {
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+    constructor(props: ErrorBoundaryProps) {
         super(props);
         this.state = { hasError: false };
     }
@@ -13,7 +20,7 @@ class ErrorBoundary extends Component {
         return { hasError: true };
     }
 
-    componentDidCatch(error, errorInfo) {
+    componentDidCatch(error: Error, errorInfo: ErrorInfo) {
         console.error("Unhandled error in component tree:", error, errorInfo);
     }
 
@@ -34,9 +41,5 @@ class ErrorBoundary extends Component {
         return this.props.children;
     }
 }
-
-ErrorBoundary.propTypes = {
-    children: PropTypes.node.isRequired,
-};
 
 export default ErrorBoundary;
