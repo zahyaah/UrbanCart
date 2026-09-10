@@ -3,7 +3,7 @@ import { cn } from "cn"
 import { Switch as SwitchPrimitive } from "radix-ui"
 
 function Switch({
-  className,
+  className = "",
   size = "default",
   ...props
 }) {

@@ -2,7 +2,7 @@ import * as React from "react"
 import { cn } from "cn"
 
 function Input({
-  className,
+  className = "",
   type,
   ...props
 }) {

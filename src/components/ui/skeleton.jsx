@@ -1,7 +1,7 @@
 import { cn } from "cn"
 
 function Skeleton({
-  className,
+  className = "",
   ...props
 }) {
   return (
