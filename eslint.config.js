@@ -8,7 +8,11 @@ import tseslint from 'typescript-eslint'
 export default tseslint.config(
   // server/ is its own project with its own eslint.config.js (Node/TS
   // rules, no React plugins) -- run its lint via `cd server && npm run lint`.
-  { ignores: ['dist', 'coverage', 'playwright-report', 'test-results', 'server'] },
+  // k6/ scripts run in k6's own JS runtime (global __ENV/__VU/__ITER, its
+  // own module resolution for `k6`/`k6/http`) -- neither Node nor browser
+  // globals apply, and there's no separate lint config worth standing up
+  // for two small scripts.
+  { ignores: ['dist', 'coverage', 'playwright-report', 'test-results', 'server', 'k6'] },
   {
     files: ['**/*.{js,jsx}'],
     languageOptions: {
