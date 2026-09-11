@@ -15,9 +15,11 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/drizzle ./drizzle
+COPY docker-entrypoint.sh ./
+RUN chmod +x docker-entrypoint.sh
 
 RUN addgroup -S urbancart && adduser -S urbancart -G urbancart
 USER urbancart
 
 EXPOSE 3001
-CMD ["node", "dist/server.js"]
+CMD ["./docker-entrypoint.sh"]

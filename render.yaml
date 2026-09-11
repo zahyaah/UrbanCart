@@ -3,11 +3,13 @@
 # dashboard: New -> Blueprint -> connect this repo. See README.md's
 # Deployment section for the full walkthrough.
 #
-# `dockerCommand` runs migrations before starting the server on every deploy
-# (and every restart) rather than relying on `preDeployCommand`, whose
-# behavior with `runtime: docker` services isn't documented -- drizzle's
-# migrator tracks applied migrations and no-ops on ones already run, so this
-# is safe to repeat.
+# No dockerCommand override here -- Render's dockerCommand field doesn't
+# shell-parse a compound `a && b` command the way a Dockerfile CMD does (it
+# was passed through literally and failed with "not found" on the whole
+# string). The image's own CMD (server/docker-entrypoint.sh: migrate, then
+# start) runs migrations before every boot instead -- drizzle's migrator
+# tracks applied migrations and no-ops on ones already run, so repeating it
+# on every restart is safe.
 databases:
   - name: urbancart-postgres
     plan: free
@@ -27,7 +29,6 @@ services:
     region: oregon
     dockerfilePath: ./server/Dockerfile
     dockerContext: ./server
-    dockerCommand: sh -c "node dist/db/migrate.js && node dist/server.js"
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
