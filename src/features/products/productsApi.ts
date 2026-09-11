@@ -1,12 +1,10 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createApi } from "@reduxjs/toolkit/query/react";
+import { apiBaseQuery } from "../../lib/rtkBaseQuery";
 
-// The Fake Store API's actual product shape (https://fakestoreapi.com/docs).
-// category and rating are on the wire but currently unread by the app --
-// kept here because the type should describe what the endpoint returns, not
-// just today's usage; a consumer reaching for either next week shouldn't
-// have to widen this type first.
+// Matches the backend's public product shape (server/src/modules/catalog/schemas.ts).
+// id is a uuid string, not a number -- our own database, not fakestoreapi.
 export interface Product {
-    id: number;
+    id: string;
     title: string;
     price: number;
     description: string;
@@ -20,12 +18,13 @@ export interface Product {
 
 export const productsApi = createApi({
     reducerPath: "productsApi",
-    baseQuery: fetchBaseQuery({ baseUrl: "https://fakestoreapi.com" }),
+    baseQuery: apiBaseQuery,
     endpoints: (builder) => ({
         getProducts: builder.query<Product[], void>({
             query: () => "/products",
+            transformResponse: (response: { products: Product[] }) => response.products,
         }),
-        getProductById: builder.query<Product, number>({
+        getProductById: builder.query<Product, string>({
             query: (id) => `/products/${id}`,
         }),
     }),

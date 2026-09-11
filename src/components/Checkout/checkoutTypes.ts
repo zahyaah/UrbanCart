@@ -1,8 +1,9 @@
-import type { CartItem } from "../../features/cart/cartSlice";
-
-// Shared shapes for the checkout wizard's captured step data, used by the
-// step that produces each one, ReviewStep (which displays both), and
-// Checkout's own wizard state.
+// Shared shapes for the checkout wizard. Payment/PlacedOrder used to live
+// here (the old mock card form + a client-side-only "confirmation" step),
+// but real payment collection is now Stripe's embedded Payment Element --
+// see PaymentStep.tsx/PaymentForm.tsx -- and confirmation is a real routed
+// page (ConfirmationPage.tsx) that fetches the order from the server, not
+// wizard state carried in memory.
 export interface Address {
     fullName: string;
     addressLine1: string;
@@ -12,18 +13,4 @@ export interface Address {
     country: string;
 }
 
-export interface Payment {
-    cardholderName: string;
-    cardNumber: string;
-    expiry: string;
-    cvc: string;
-}
-
-// Captured at place-order time -- see Checkout.tsx's handlePlaceOrder.
-export interface PlacedOrder {
-    items: CartItem[];
-    subtotal: number;
-    orderNumber: string;
-}
-
-export type WizardStep = "address" | "payment" | "review" | "confirmation";
+export type WizardStep = "address" | "payment";

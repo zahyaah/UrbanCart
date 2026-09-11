@@ -22,29 +22,28 @@ const totalAmount = () =>
     screen.getByText("Total Amount").parentElement.querySelector("span:last-child").textContent;
 
 describe("OrderSummary", () => {
-    it("applies the $5 fixed discount and the 5% discount to the subtotal", () => {
-        // 100.00 subtotal - $5 fixed - $5.00 (5%) = $90.00
+    it("shows the total as exactly the subtotal -- no discount is applied here or by the server", () => {
+        // ADR: this used to show a decorative "$5 + 5% off" that never
+        // matched what checkout actually charged. Total Amount must equal
+        // what Stripe is asked to charge (server/src/modules/orders'
+        // snapshotCartForOrder computes the same plain sum), so there's no
+        // discount math on either side until a real one exists on both.
         renderSummary([line({ price: 100, quantity: 1 })]);
 
-        expect(screen.getByText("$100")).toBeInTheDocument();
-        expect(totalAmount()).toBe("$90.00");
+        // "Total MRP" and "Total Amount" are now the identical figure --
+        // both rows genuinely show $100.00, which is the point of the fix.
+        expect(screen.getAllByText("$100.00")).toHaveLength(2);
+        expect(totalAmount()).toBe("$100.00");
     });
 
     it("prices multiple units and multiple line items together", () => {
-        // (109.95 * 2) + (22.30 * 3) = 286.80; -5 fixed; -14.34 (5%) = 267.46
+        // (109.95 * 2) + (22.30 * 3) = 286.80
         renderSummary([
             line({ id: 1, price: 109.95, quantity: 2 }),
             line({ id: 2, price: 22.3, quantity: 3 }),
         ]);
 
-        expect(totalAmount()).toBe("$267.46");
-    });
-
-    it("never charges a negative total when the cart is worth less than the fixed discount", () => {
-        // A $4 cart cannot become -$1.20; the floor keeps it at zero.
-        renderSummary([line({ price: 4, quantity: 1 })]);
-
-        expect(totalAmount()).toBe("$0.00");
+        expect(totalAmount()).toBe("$286.80");
     });
 
     it("reports the unit count rather than the line-item count", () => {

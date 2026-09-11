@@ -1,6 +1,9 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import cartReducer, { CART_STORAGE_KEY } from "../features/cart/cartSlice";
 import { productsApi } from "../features/products/productsApi";
+import { authApi } from "../features/auth/authApi";
+import { cartApi } from "../features/cart/cartApi";
+import { ordersApi } from "../features/orders/ordersApi";
 
 // Defined independently of the store so RootState (below) doesn't depend on
 // createStore's own preloadedState parameter, which is itself typed against
@@ -9,6 +12,9 @@ import { productsApi } from "../features/products/productsApi";
 const rootReducer = combineReducers({
     cart: cartReducer,
     [productsApi.reducerPath]: productsApi.reducer,
+    [authApi.reducerPath]: authApi.reducer,
+    [cartApi.reducerPath]: cartApi.reducer,
+    [ordersApi.reducerPath]: ordersApi.reducer,
 });
 
 // Inferred from the reducer map, so this can never drift from the actual
@@ -21,7 +27,13 @@ export type RootState = ReturnType<typeof rootReducer>;
 export function createStore(preloadedState?: Partial<RootState>) {
     return configureStore({
         reducer: rootReducer,
-        middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(productsApi.middleware),
+        middleware: (getDefaultMiddleware) =>
+            getDefaultMiddleware().concat(
+                productsApi.middleware,
+                authApi.middleware,
+                cartApi.middleware,
+                ordersApi.middleware
+            ),
         preloadedState,
     });
 }

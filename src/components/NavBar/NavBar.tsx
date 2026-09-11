@@ -3,10 +3,10 @@ import { Link } from "react-router-dom";
 import { Moon, ShoppingCart, Sun } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
-import { selectCartItemCount } from "../../features/cart/cartSelectors";
-import { useAppSelector } from "../../redux/hooks";
+import { useCart } from "../../hooks/useCart";
 import { useTheme } from "../../providers/ThemeProvider";
 import { Button } from "../ui/button";
+import AuthMenu from "./AuthMenu";
 import { EASE } from "../../lib/motion";
 
 interface NavBarProps {
@@ -15,7 +15,8 @@ interface NavBarProps {
 
 function NavBar({ onOpenCart }: NavBarProps) {
     const prefersReducedMotion = useReducedMotion();
-    const cartItemCount = useAppSelector(selectCartItemCount);
+    const { items } = useCart();
+    const cartItemCount = items.reduce((sum, i) => sum + i.quantity, 0);
     const { theme, toggleTheme } = useTheme();
     const [scrolled, setScrolled] = useState(false);
 
@@ -93,6 +94,8 @@ function NavBar({ onOpenCart }: NavBarProps) {
                         )}
                     </AnimatePresence>
                 </Button>
+
+                <AuthMenu />
             </div>
         </motion.header>
     );

@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { selectCartItemCount, selectCartSubtotal } from "../../features/cart/cartSelectors";
-import { useAppSelector } from "../../redux/hooks";
+import { useCart } from "../../hooks/useCart";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
@@ -9,16 +8,23 @@ interface OrderSummaryProps {
     mode?: "cart" | "checkout";
     ctaLabel?: string;
     onCtaClick?: () => void;
+    /** false on the Payment step: Stripe's own form has the submit button
+     * there, so a second "PLACE ORDER" button would be redundant. */
+    showCta?: boolean;
 }
 
-function OrderSummary({ mode = "cart", ctaLabel, onCtaClick }: OrderSummaryProps) {
+function OrderSummary({ mode = "cart", ctaLabel, onCtaClick, showCta = true }: OrderSummaryProps) {
     const navigate = useNavigate();
-    const itemCount = useAppSelector(selectCartItemCount);
-    const totalAmount = useAppSelector(selectCartSubtotal);
-
-    const initialAmount = parseFloat(totalAmount.toFixed(2));
-    const fivePercentDiscount = parseFloat((initialAmount * 0.05).toFixed(2));
-    const finalAmount = Math.max(0, initialAmount - (5 + fivePercentDiscount)).toFixed(2);
+    const { items } = useCart();
+    const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
+    // No discount logic here on purpose -- this used to show a decorative
+    // "$5 + 5% off" that never corresponded to anything real. Now that
+    // checkout charges a real Stripe amount computed server-side from the
+    // same live prices (see server's snapshotCartForOrder), showing a
+    // different, lower number here would mean the total on screen doesn't
+    // match what the shopper is actually charged. Total Amount is exactly
+    // the subtotal until a real discount exists on both sides.
+    const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
     const label = ctaLabel || (mode === "checkout" ? "PLACE ORDER" : "PROCEED TO CHECKOUT");
 
@@ -36,15 +42,7 @@ function OrderSummary({ mode = "cart", ctaLabel, onCtaClick }: OrderSummaryProps
             <div className="space-y-3">
                 <div className="flex justify-between text-muted-foreground">
                     <span>Total MRP</span>
-                    <span className="font-medium">${initialAmount}</span>
-                </div>
-                <div className="flex justify-between text-muted-foreground">
-                    <span>Fixed Discount</span>
-                    <span className="font-medium">- $5</span>
-                </div>
-                <div className="flex justify-between text-muted-foreground">
-                    <span>Discount on MRP (5%)</span>
-                    <span className="font-medium text-success">- ${fivePercentDiscount}</span>
+                    <span className="font-medium">${subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center text-muted-foreground">
                     <span>Platform Fee</span>
@@ -58,9 +56,9 @@ function OrderSummary({ mode = "cart", ctaLabel, onCtaClick }: OrderSummaryProps
             <Separator className="my-4" />
             <div className="flex justify-between text-lg font-semibold">
                 <span>Total Amount</span>
-                <span>${finalAmount}</span>
+                <span>${subtotal.toFixed(2)}</span>
             </div>
-            {itemCount > 0 && (
+            {showCta && itemCount > 0 && (
                 <Button
                     className="mt-6 min-h-[44px] w-full tracking-wide"
                     onClick={handleClick}

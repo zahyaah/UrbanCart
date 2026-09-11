@@ -1,14 +1,12 @@
 import { Link } from "react-router-dom";
 import { Minus, Plus } from "lucide-react";
 
-import { decrementQuantity, incrementQuantity, removeFromCart, type CartItem } from "../../features/cart/cartSlice";
-import { selectCartItems, selectCartSubtotal } from "../../features/cart/cartSelectors";
-import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import { useCart, type CartLine } from "../../hooks/useCart";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "../ui/sheet";
 import { Button } from "../ui/button";
 
-function CartSheetItem({ item }: { item: CartItem }) {
-    const dispatch = useAppDispatch();
+function CartSheetItem({ item }: { item: CartLine }) {
+    const { incrementItem, decrementItem, removeItem } = useCart();
 
     return (
         <div className="flex items-center gap-3 border-b border-border pb-3">
@@ -21,7 +19,7 @@ function CartSheetItem({ item }: { item: CartItem }) {
                         type="button"
                         variant="outline"
                         size="icon-sm"
-                        onClick={() => dispatch(decrementQuantity({ id: item.id }))}
+                        onClick={() => decrementItem(item.id)}
                         aria-label={`Decrease quantity of ${item.title}`}
                     >
                         <Minus aria-hidden="true" />
@@ -31,7 +29,7 @@ function CartSheetItem({ item }: { item: CartItem }) {
                         type="button"
                         variant="outline"
                         size="icon-sm"
-                        onClick={() => dispatch(incrementQuantity({ id: item.id }))}
+                        onClick={() => incrementItem(item.id)}
                         aria-label={`Increase quantity of ${item.title}`}
                     >
                         <Plus aria-hidden="true" />
@@ -42,7 +40,7 @@ function CartSheetItem({ item }: { item: CartItem }) {
                 type="button"
                 variant="ghost"
                 className="flex-shrink-0 text-xs text-destructive hover:text-destructive"
-                onClick={() => dispatch(removeFromCart({ id: item.id }))}
+                onClick={() => removeItem(item.id)}
             >
                 Remove
             </Button>
@@ -56,8 +54,8 @@ interface CartSheetProps {
 }
 
 function CartSheet({ open, onOpenChange }: CartSheetProps) {
-    const items = useAppSelector(selectCartItems);
-    const subtotal = useAppSelector(selectCartSubtotal);
+    const { items } = useCart();
+    const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>

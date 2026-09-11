@@ -1,16 +1,13 @@
 import { Separator } from "../ui/separator";
 import type { WizardStep } from "./checkoutTypes";
 
-type ActiveStep = Exclude<WizardStep, "confirmation">;
-
-const STEP_LABELS: Record<ActiveStep, string> = {
+const STEP_LABELS: Record<WizardStep, string> = {
     address: "Address",
     payment: "Payment",
-    review: "Review",
 };
-const STEP_ORDER: ActiveStep[] = ["address", "payment", "review"];
+const STEP_ORDER: WizardStep[] = ["address", "payment"];
 
-function StepIndicator({ currentStep }: { currentStep: ActiveStep }) {
+function StepIndicator({ currentStep }: { currentStep: WizardStep }) {
     const currentIndex = STEP_ORDER.indexOf(currentStep);
 
     return (

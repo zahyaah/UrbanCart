@@ -1,29 +1,26 @@
 import { useCallback } from "react";
 import { toast } from "sonner";
-import { addToCart, type CartItem } from "../features/cart/cartSlice";
-import { useAppDispatch } from "../redux/hooks";
+import { useCart } from "./useCart";
 
-type AddableProduct = Omit<CartItem, "quantity">;
+interface AddableProduct {
+    id: string;
+    title: string;
+    price: number;
+    image: string;
+}
 
 // Shared "add to cart + confirm" behavior used by both the product card
-// and the product detail page.
+// and the product detail page. Routes through useCart, which is what
+// decides guest (local Redux) vs. server cart.
 export function useAddToCart() {
-    const dispatch = useAppDispatch();
+    const { addItem } = useCart();
 
     const addProductToCart = useCallback(
         (product: AddableProduct, quantity = 1) => {
-            dispatch(
-                addToCart({
-                    id: product.id,
-                    title: product.title,
-                    price: product.price,
-                    image: product.image,
-                    quantity,
-                })
-            );
+            addItem(product, quantity);
             toast.success(`${product.title} added to cart`);
         },
-        [dispatch]
+        [addItem]
     );
 
     return { addProductToCart };

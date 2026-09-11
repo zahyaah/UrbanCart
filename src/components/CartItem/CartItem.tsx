@@ -1,26 +1,13 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { Minus, Plus, Trash2 } from "lucide-react";
-import { removeFromCart, incrementQuantity, decrementQuantity, type CartItem as CartItemType } from "../../features/cart/cartSlice";
-import { useAppDispatch } from "../../redux/hooks";
+import { useCart, type CartLine } from "../../hooks/useCart";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 import { fadeUp, reduce, EASE } from "../../lib/motion";
 
-function CartItem({ item }: { item: CartItemType }) {
-    const dispatch = useAppDispatch();
+function CartItem({ item }: { item: CartLine }) {
+    const { incrementItem, decrementItem, removeItem } = useCart();
     const prefersReducedMotion = useReducedMotion();
-
-    const removeItem = () => {
-        dispatch(removeFromCart({ id: item.id }));
-    };
-
-    const increaseQuantity = () => {
-        dispatch(incrementQuantity({ id: item.id }));
-    };
-
-    const decreaseQuantity = () => {
-        dispatch(decrementQuantity({ id: item.id }));
-    };
 
     return (
         <motion.div
@@ -54,7 +41,7 @@ function CartItem({ item }: { item: CartItemType }) {
                             variant="outline"
                             size="icon"
                             className="min-h-[44px] min-w-[44px]"
-                            onClick={decreaseQuantity}
+                            onClick={() => decrementItem(item.id)}
                             aria-label={`Decrease quantity of ${item.title}`}
                         >
                             <Minus aria-hidden="true" />
@@ -67,7 +54,7 @@ function CartItem({ item }: { item: CartItemType }) {
                             variant="outline"
                             size="icon"
                             className="min-h-[44px] min-w-[44px]"
-                            onClick={increaseQuantity}
+                            onClick={() => incrementItem(item.id)}
                             aria-label={`Increase quantity of ${item.title}`}
                         >
                             <Plus aria-hidden="true" />
@@ -78,7 +65,7 @@ function CartItem({ item }: { item: CartItemType }) {
                             variant="ghost"
                             size="icon"
                             className="ml-auto min-h-[44px] min-w-[44px] text-destructive hover:text-destructive"
-                            onClick={removeItem}
+                            onClick={() => removeItem(item.id)}
                             aria-label={`Remove ${item.title} from cart`}
                         >
                             <Trash2 aria-hidden="true" />

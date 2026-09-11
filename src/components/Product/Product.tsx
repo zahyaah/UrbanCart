@@ -28,10 +28,10 @@ function ProductSkeleton() {
 function Product() {
     const prefersReducedMotion = useReducedMotion();
     const params = useParams<{ id: string }>();
-    const id = parseInt(params.id ?? "", 10);
+    const id = params.id;
 
-    const { data, isLoading, isError } = useGetProductByIdQuery(id, {
-        skip: Number.isNaN(id),
+    const { data, isLoading, isError } = useGetProductByIdQuery(id ?? "", {
+        skip: !id,
     });
 
     const { addProductToCart } = useAddToCart();
@@ -49,9 +49,10 @@ function Product() {
     if (isLoading) return <ProductSkeleton />;
     // isLoading is false past this point, so the earlier "still loading"
     // case is already ruled out -- !data here means the fetch genuinely
-    // came back empty. Checking `!data` directly (rather than a separately
-    // computed boolean) is also what lets TS narrow `data` for the JSX below.
-    if (Number.isNaN(id) || isError || !data) {
+    // came back empty (404, or no :id in the route at all). Checking !data
+    // directly (rather than a separately computed boolean) is also what
+    // lets TS narrow `data` for the JSX below.
+    if (isError || !data) {
         return <ErrorPage errorMessage="Product not found" />;
     }
 

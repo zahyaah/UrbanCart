@@ -40,17 +40,19 @@ const buttonVariants = cva(
   }
 )
 
-function Button({
-  className = "",
-  variant = "default",
-  size = "default",
-  asChild = false,
-  ...props
-}) {
+// forwardRef: a Radix trigger using asChild (e.g. DropdownMenuTrigger)
+// attaches its own ref to this component's child to manage focus/position.
+// Without forwarding it, that ref silently fails to attach -- same class of
+// gap as SheetOverlay's during Phase B.
+const Button = React.forwardRef(function Button(
+  { className = "", variant = "default", size = "default", asChild = false, ...props },
+  ref
+) {
   const Comp = asChild ? Slot.Root : "button"
 
   return (
     <Comp
+      ref={ref}
       data-slot="button"
       data-variant={variant}
       data-size={size}
@@ -58,6 +60,6 @@ function Button({
       {...props}
     />
   )
-}
+})
 
 export { Button, buttonVariants }

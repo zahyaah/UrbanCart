@@ -6,7 +6,7 @@ import { Button } from "../ui/button"
 import { fadeUp, reduce, EASE } from "../../lib/motion"
 
 interface CardProps {
-    id: number;
+    id: string;
     title: string;
     price: number;
     image: string;

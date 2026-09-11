@@ -2,52 +2,36 @@ import { useReducer } from "react";
 import { Navigate } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { stepTransition, reduce } from "../../lib/motion";
-import { clearCart } from "../../features/cart/cartSlice";
-import { selectCartItemCount, selectCartItems, selectCartSubtotal } from "../../features/cart/cartSelectors";
-import { useAppDispatch, useAppSelector } from "../../redux/hooks";
+import { useCart } from "../../hooks/useCart";
+import { useGetMeQuery } from "../../features/auth/authApi";
 import StepIndicator from "./StepIndicator";
 import AddressStep from "./AddressStep";
 import PaymentStep from "./PaymentStep";
-import ReviewStep from "./ReviewStep";
-import ConfirmationStep from "./ConfirmationStep";
-import type { Address, Payment, PlacedOrder, WizardStep } from "./checkoutTypes";
+import type { Address, WizardStep } from "./checkoutTypes";
 
 interface WizardState {
     step: WizardStep;
     address: Address | null;
-    payment: Payment | null;
-    // Snapshot captured at place-order time -- the confirmation step must
-    // render from this, not live cart selectors, since placing an order
-    // clears the cart.
-    placedOrder: PlacedOrder | null;
+    // Regenerated on every SUBMIT_ADDRESS, not once per wizard mount -- the
+    // backend hashes the shipping address into the idempotency claim (see
+    // SPEC-orders.md), so reusing a key after the shopper edits their
+    // address would 422 as a "different intent" rather than letting them
+    // fix a typo. A fresh key per submitted address keeps each attempt
+    // independent while still deduping true in-flight retries within one
+    // Payment-step visit.
+    idempotencyKey: string;
 }
 
-type WizardAction =
-    | { type: "SUBMIT_ADDRESS"; payload: Address }
-    | { type: "SUBMIT_PAYMENT"; payload: Payment }
-    | { type: "BACK_TO_ADDRESS" }
-    | { type: "BACK_TO_PAYMENT" }
-    | { type: "PLACE_ORDER"; payload: PlacedOrder };
+type WizardAction = { type: "SUBMIT_ADDRESS"; payload: Address } | { type: "BACK_TO_ADDRESS" };
 
-const initialWizardState: WizardState = {
-    step: "address",
-    address: null,
-    payment: null,
-    placedOrder: null,
-};
+const initialWizardState: WizardState = { step: "address", address: null, idempotencyKey: "" };
 
 function wizardReducer(state: WizardState, action: WizardAction): WizardState {
     switch (action.type) {
         case "SUBMIT_ADDRESS":
-            return { ...state, address: action.payload, step: "payment" };
-        case "SUBMIT_PAYMENT":
-            return { ...state, payment: action.payload, step: "review" };
+            return { ...state, address: action.payload, step: "payment", idempotencyKey: crypto.randomUUID() };
         case "BACK_TO_ADDRESS":
             return { ...state, step: "address" };
-        case "BACK_TO_PAYMENT":
-            return { ...state, step: "payment" };
-        case "PLACE_ORDER":
-            return { ...state, placedOrder: action.payload, step: "confirmation" };
         default:
             return state;
     }
@@ -56,23 +40,25 @@ function wizardReducer(state: WizardState, action: WizardAction): WizardState {
 function Checkout() {
     const [state, dispatchWizard] = useReducer(wizardReducer, initialWizardState);
     const prefersReducedMotion = useReducedMotion();
-    const dispatch = useAppDispatch();
-    const itemCount = useAppSelector(selectCartItemCount);
-    const items = useAppSelector(selectCartItems);
-    const subtotal = useAppSelector(selectCartSubtotal);
+    const { items, isLoading: isCartLoading } = useCart();
+    const { data: user, isLoading: isSessionLoading } = useGetMeQuery();
 
-    const handlePlaceOrder = () => {
-        const orderNumber = `UC-${Date.now().toString(36).toUpperCase()}`;
-        dispatchWizard({
-            type: "PLACE_ORDER",
-            payload: { items, subtotal, orderNumber },
-        });
-        dispatch(clearCart());
-    };
+    // POST /orders requires auth -- send a guest to log in rather than let
+    // them reach the Payment step and hit a raw 401 there.
+    if (!isSessionLoading && !user) {
+        return <Navigate to="/login" state={{ from: "/checkout" }} replace />;
+    }
 
-    // An empty cart can't check out -- except once an order has just been
-    // placed, since placing it clears the cart but confirmation must still show.
-    if (itemCount === 0 && state.step !== "confirmation") {
+    // Wait for the server cart to actually resolve before judging it empty
+    // -- items defaults to [] while the query is still in flight, and
+    // redirecting on that transient state (rather than a real empty cart)
+    // bounced a just-logged-in shopper straight back to /cart before their
+    // merged cart had even loaded.
+    if (isCartLoading) {
+        return <p className="py-16 text-center text-muted-foreground">Loading your cart…</p>;
+    }
+
+    if (items.length === 0) {
         return <Navigate to="/cart" replace />;
     }
 
@@ -81,7 +67,7 @@ function Checkout() {
         // a full-width card past the viewport edge on narrow screens and the
         // page picks up a horizontal scrollbar for the length of the animation.
         <div className="mx-auto max-w-3xl overflow-x-hidden pb-12">
-            {state.step !== "confirmation" && <StepIndicator currentStep={state.step} />}
+            <StepIndicator currentStep={state.step} />
 
             <AnimatePresence mode="wait">
                 <motion.div
@@ -97,22 +83,13 @@ function Checkout() {
                             onSubmit={(values) => dispatchWizard({ type: "SUBMIT_ADDRESS", payload: values })}
                         />
                     )}
-                    {state.step === "payment" && (
+                    {state.step === "payment" && state.address && (
                         <PaymentStep
-                            initialValues={state.payment}
-                            onSubmit={(values) => dispatchWizard({ type: "SUBMIT_PAYMENT", payload: values })}
+                            idempotencyKey={state.idempotencyKey}
+                            shippingAddress={state.address}
                             onBack={() => dispatchWizard({ type: "BACK_TO_ADDRESS" })}
                         />
                     )}
-                    {state.step === "review" && (
-                        <ReviewStep
-                            address={state.address}
-                            payment={state.payment}
-                            onBack={() => dispatchWizard({ type: "BACK_TO_PAYMENT" })}
-                            onPlaceOrder={handlePlaceOrder}
-                        />
-                    )}
-                    {state.step === "confirmation" && <ConfirmationStep order={state.placedOrder} />}
                 </motion.div>
             </AnimatePresence>
         </div>
