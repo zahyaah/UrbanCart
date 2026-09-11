@@ -1,0 +1,62 @@
+# Render Blueprint -- provisions the backend, its Postgres database, and its
+# Key Value (Redis) instance together from one file. Deploy via Render's
+# dashboard: New -> Blueprint -> connect this repo. See README.md's
+# Deployment section for the full walkthrough.
+#
+# `dockerCommand` runs migrations before starting the server on every deploy
+# (and every restart) rather than relying on `preDeployCommand`, whose
+# behavior with `runtime: docker` services isn't documented -- drizzle's
+# migrator tracks applied migrations and no-ops on ones already run, so this
+# is safe to repeat.
+databases:
+  - name: urbancart-postgres
+    plan: free
+    region: oregon
+
+services:
+  - name: urbancart-redis
+    type: keyvalue
+    plan: free
+    region: oregon
+    ipAllowList: [] # private network only -- no public internet access
+
+  - name: urbancart-backend
+    type: web
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: ./server
+    dockerCommand: sh -c "node dist/db/migrate.js && node dist/server.js"
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: DATABASE_URL
+        fromDatabase:
+          name: urbancart-postgres
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: urbancart-redis
+          type: keyvalue
+          property: connectionString
+      # Secrets and deployment-specific values -- Render prompts for these
+      # during Blueprint creation rather than storing them in this file.
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: SENTRY_DSN
+        sync: false
+      # Wherever the frontend ends up deployed -- see README.md.
+      - key: CORS_ORIGIN
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: COOKIE_SAME_SITE
+        value: none # frontend and backend are on different Render/host domains
