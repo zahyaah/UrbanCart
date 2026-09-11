@@ -1,20 +1,20 @@
-# Use an official Node.js runtime as a parent image
-FROM node:18-alpine
-
-# Set the working directory in the container
+# Build stage: `vite build` needs devDependencies (Vite itself, Tailwind).
+FROM node:22-alpine AS build
 WORKDIR /app
-
-# Copy package.json and package-lock.json
 COPY package.json package-lock.json ./
-
-# Install dependencies
-RUN npm install
-
-# Copy the rest of the application code
+RUN npm ci
 COPY . .
+# Baked into the bundle at build time -- Vite inlines import.meta.env.VITE_*
+# values during `vite build`, so these must be build ARGs, not runtime env
+# vars (a static SPA has no server-side process to read them from later).
+ARG VITE_API_URL
+ARG VITE_STRIPE_PUBLISHABLE_KEY
+ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_STRIPE_PUBLISHABLE_KEY=${VITE_STRIPE_PUBLISHABLE_KEY}
+RUN npm run build
 
-# Expose the port Vite runs on (default is 5173)
-EXPOSE 5173
-
-# Start the Vite development server
-CMD ["npm", "run", "dev", "--", "--host"]
+# Runtime stage: static files served by nginx, no Node at all.
+FROM nginx:1.27-alpine AS runtime
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80

@@ -1,0 +1,82 @@
+# Full local stack: `docker compose up` boots Postgres, Redis, the backend
+# (migrated automatically), and the frontend -- production-parity images,
+# not the dev servers. Supersedes server/docker-compose.yml (Postgres-only).
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: urbancart
+      POSTGRES_PASSWORD: urbancart_dev_only
+      POSTGRES_DB: urbancart
+    ports:
+      - "5433:5432"
+    volumes:
+      - urbancart-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U urbancart -d urbancart"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    build: ./server
+    command: ["node", "dist/db/migrate.js"]
+    environment:
+      DATABASE_URL: postgres://urbancart:urbancart_dev_only@postgres:5432/urbancart
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  backend:
+    build: ./server
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgres://urbancart:urbancart_dev_only@postgres:5432/urbancart
+      REDIS_URL: redis://redis:6379/0
+      # Dev-only fallback -- override with a real secret via a shell-exported
+      # JWT_ACCESS_SECRET when running this outside local development.
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-docker-compose-local-dev-secret-not-for-production-xxxxxxxx}
+      CORS_ORIGIN: http://localhost:8080
+      FRONTEND_URL: http://localhost:8080
+      COOKIE_SAME_SITE: lax
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_replace_me}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_replace_me}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  frontend:
+    build:
+      context: .
+      args:
+        VITE_API_URL: http://localhost:3001
+        VITE_STRIPE_PUBLISHABLE_KEY: ${VITE_STRIPE_PUBLISHABLE_KEY:-pk_test_replace_me}
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+
+volumes:
+  urbancart-postgres-data:
