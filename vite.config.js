@@ -15,8 +15,10 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: './src/test/setup.js',
-    // e2e/ is Playwright's; Vitest must not try to run those specs.
-    exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
+    // e2e/ is Playwright's; server/ is its own separate project (its own
+    // vitest.config.ts, own DB, run via `cd server && npm test`) -- the
+    // root runner must not sweep either up.
+    exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**', 'server/**'],
     coverage: {
       provider: 'v8',
       reportsDirectory: './coverage',
