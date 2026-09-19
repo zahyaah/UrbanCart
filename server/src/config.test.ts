@@ -34,4 +34,37 @@ describe("config", () => {
 
         expect(config.REDIS_URL).toBe("redis://localhost:6379/0");
     });
+
+    it("normalizes CORS_ORIGIN entries to their bare origin", async () => {
+        // Trailing slash is an easy env-var typo -- request.headers.origin
+        // from a real browser never has one, so leaving it unnormalized
+        // would make this entry silently never match.
+        process.env.CORS_ORIGIN = "http://localhost:5173/, HTTP://Localhost:5174";
+        process.env.FRONTEND_URL = "http://localhost:5173";
+
+        const { config } = await import("./config.js");
+
+        expect(config.corsOrigins).toEqual(["http://localhost:5173", "http://localhost:5174"]);
+    });
+
+    it("exits at boot when FRONTEND_URL is not included in CORS_ORIGIN", async () => {
+        // This is the deploy-drift bug this schema guards against: an
+        // operator updates one of these two vars (e.g. a new frontend
+        // deployment URL) without updating the other, and CORS/CSRF
+        // silently disagree on what the frontend's origin is. Failing
+        // loudly at boot turns that into a deploy-time error instead of a
+        // production 403 discovered days later.
+        process.env.CORS_ORIGIN = "http://localhost:5173";
+        process.env.FRONTEND_URL = "https://a-different-deploy.example.com";
+        const exitSpy = vi.spyOn(process, "exit").mockImplementation(() => undefined as never);
+        const errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+        await import("./config.js");
+
+        expect(exitSpy).toHaveBeenCalledWith(1);
+        expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("FRONTEND_URL"));
+
+        exitSpy.mockRestore();
+        errorSpy.mockRestore();
+    });
 });

@@ -26,7 +26,11 @@ export async function authenticate(request: FastifyRequest, _reply: FastifyReply
     }
 }
 
-const ALLOWED_ORIGINS = new Set([...config.corsOrigins, config.FRONTEND_URL]);
+// config.corsOrigins is the same allowlist @fastify/cors is registered
+// with (app.ts) -- one shared source of truth, see config.ts, which also
+// fails loudly at boot if FRONTEND_URL isn't a member of it. Kept as a Set
+// here purely for O(1) lookup on every request.
+const ALLOWED_ORIGINS = new Set(config.corsOrigins);
 
 /** preHandler: double-submit CSRF check for cookie-authenticated mutating
  * requests. Origin (falling back to Referer) must match an allowlisted
@@ -35,6 +39,17 @@ const ALLOWED_ORIGINS = new Set([...config.corsOrigins, config.FRONTEND_URL]);
 export async function requireCsrf(request: FastifyRequest, _reply: FastifyReply) {
     const origin = request.headers.origin ?? refererOrigin(request.headers.referer);
     if (!origin || !ALLOWED_ORIGINS.has(origin)) {
+        // 4xx responses aren't logged by the global error handler (app.ts
+        // only reports statusCode >= 500), so a rejected Origin otherwise
+        // leaves no server-side trace at all. Only log when an Origin (or
+        // Referer) was actually present but didn't match -- that's the
+        // deploy-drift/attack signal. A request with neither header (health
+        // checks, curl, other non-browser clients) is routine and logging
+        // it here would just be noise keyed on whatever an untrusted client
+        // sends, not evidence of a stale CORS_ORIGIN.
+        if (origin) {
+            request.log.warn({ origin, path: request.url }, "rejected request: Origin not in CORS_ORIGIN allowlist");
+        }
         throw Errors.forbidden("Origin not allowed");
     }
 

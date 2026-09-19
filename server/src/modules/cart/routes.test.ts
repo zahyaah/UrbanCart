@@ -133,6 +133,26 @@ describe("POST /cart/items", () => {
 
         expect(res.statusCode).toBe(403);
     });
+
+    // Reproduces the deployed-frontend failure mode: a valid session and a
+    // correct CSRF token/cookie pair, but the browser's Origin doesn't
+    // match CORS_ORIGIN/FRONTEND_URL (e.g. the Vercel URL on record is
+    // stale, or missing a preview deployment). Isolated from the "requires
+    // a CSRF token" case above, which never sends Origin at all.
+    it("rejects a request whose Origin doesn't match the configured frontend URL", async () => {
+        const { app, session } = await registerAndGetApp();
+        const product = await seedProduct();
+
+        const res = await app.inject({
+            method: "POST",
+            url: "/cart/items",
+            headers: authHeaders(session, { origin: "https://a-different-deploy.vercel.app" }),
+            payload: { productId: product.id, quantity: 1 },
+        });
+
+        expect(res.statusCode).toBe(403);
+        expect(JSON.parse(res.body).error.message).toMatch(/origin/i);
+    });
 });
 
 describe("PATCH /cart/items/:productId", () => {
@@ -224,6 +244,26 @@ describe("POST /cart/merge", () => {
         });
 
         expect(res.statusCode).toBe(400);
+    });
+
+    // Same failure mode as POST /cart/items above: this is the exact
+    // request the frontend fires right after login (useGuestCartMerge) to
+    // fold the pre-login local cart into the account. A stale/mismatched
+    // CORS_ORIGIN or FRONTEND_URL here silently drops every guest cart on
+    // login, with no server-side trace beyond this 403.
+    it("rejects a request whose Origin doesn't match the configured frontend URL", async () => {
+        const { app, session } = await registerAndGetApp();
+        const product = await seedProduct();
+
+        const res = await app.inject({
+            method: "POST",
+            url: "/cart/merge",
+            headers: authHeaders(session, { "idempotency-key": randomUUID(), origin: "https://a-different-deploy.vercel.app" }),
+            payload: { items: [{ productId: product.id, quantity: 1 }] },
+        });
+
+        expect(res.statusCode).toBe(403);
+        expect(JSON.parse(res.body).error.message).toMatch(/origin/i);
     });
 
     it("merges a guest cart into an empty server cart", async () => {
