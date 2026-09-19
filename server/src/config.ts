@@ -15,6 +15,14 @@ const envSchema = z.object({
     JWT_ACCESS_SECRET: z.string().min(32, "JWT_ACCESS_SECRET must be at least 32 characters"),
     CORS_ORIGIN: z.string().min(1),
     COOKIE_SAME_SITE: z.enum(["lax", "none", "strict"]).default("lax"),
+    // Absent means "follow NODE_ENV" (secure cookies in production, plain
+    // cookies otherwise) -- see the isProduction fallback below. Only meant
+    // to be set explicitly where that default is wrong: a NODE_ENV=production
+    // deployment with no TLS termination in front of it (e.g. this repo's
+    // own docker-compose.yml, which builds prod images but serves them over
+    // plain HTTP on localhost) needs Secure turned off, or the browser
+    // silently discards every auth cookie the server sets.
+    COOKIE_SECURE: z.enum(["true", "false"]).optional(),
     STRIPE_SECRET_KEY: z.string().min(1),
     STRIPE_WEBHOOK_SECRET: z.string().min(1),
     FRONTEND_URL: z.string().min(1),
@@ -70,8 +78,11 @@ if (!corsOrigins.includes(frontendOrigin)) {
     process.exit(1);
 }
 
+const isProduction = parsed.data.NODE_ENV === "production";
+
 export const config = {
     ...parsed.data,
-    isProduction: parsed.data.NODE_ENV === "production",
+    isProduction,
+    cookieSecure: parsed.data.COOKIE_SECURE === undefined ? isProduction : parsed.data.COOKIE_SECURE === "true",
     corsOrigins,
 };

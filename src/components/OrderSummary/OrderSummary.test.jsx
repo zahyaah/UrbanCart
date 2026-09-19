@@ -52,7 +52,7 @@ describe("OrderSummary", () => {
             line({ id: 2, quantity: 3 }),
         ]);
 
-        expect(screen.getByText(/Price Details \(5 items\)/)).toBeInTheDocument();
+        expect(screen.getByText("5 items")).toBeInTheDocument();
     });
 
     it("hides the call to action when the cart is empty", () => {

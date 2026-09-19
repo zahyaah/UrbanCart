@@ -4,6 +4,7 @@ import { useCheckoutForm } from "../../hooks/useCheckoutForm";
 import { useRegisterMutation } from "../../features/auth/authApi";
 import { useGuestCartMerge } from "../../hooks/useGuestCartMerge";
 import { getApiErrorMessage } from "../../lib/apiErrors";
+import BackButton from "../BackButton/BackButton";
 import FormField from "../Checkout/FormField";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
@@ -56,6 +57,7 @@ function RegisterPage() {
 
     return (
         <div className="mx-auto max-w-md pb-12">
+            <BackButton className="mb-2" />
             <Card className="p-6">
                 <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                     <h1 className="font-display text-display-sm">Create Account</h1>

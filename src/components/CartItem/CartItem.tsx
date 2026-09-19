@@ -16,13 +16,13 @@ function CartItem({ item }: { item: CartLine }) {
             exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, x: -24, transition: { duration: 0.25, ease: EASE } }}
         >
             <Card className="flex-row items-center gap-4 p-3 sm:p-4">
-                <div className="h-24 w-24 flex-shrink-0 sm:h-32 sm:w-32">
+                <div className="h-24 w-24 flex-shrink-0 rounded-[1.125rem] bg-secondary/70 shadow-[inset_0_1px_3px_rgba(39,35,31,0.06)] sm:h-32 sm:w-32 dark:bg-secondary/40">
                     <img
                         src={item.image}
                         alt={item.title}
                         width={400}
                         height={400}
-                        className="h-full w-full rounded-md object-contain"
+                        className="h-full w-full object-contain p-2"
                     />
                 </div>
 
@@ -31,7 +31,7 @@ function CartItem({ item }: { item: CartLine }) {
                         {item.title}
                     </h2>
 
-                    <p className="font-display text-base sm:text-lg">
+                    <p className="font-sans text-base font-bold tabular-nums sm:text-lg">
                         $ {(item.quantity * item.price).toFixed(2)}
                     </p>
 

@@ -33,15 +33,15 @@ function NavBar({ onOpenCart }: NavBarProps) {
             initial={prefersReducedMotion ? false : { y: -24, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.5, ease: EASE }}
-            className={`fixed inset-x-0 top-4 z-20 mx-4 flex items-center justify-between rounded-xl border border-border px-4 backdrop-blur-md transition-[height,background-color,box-shadow] duration-300 sm:px-6 ${
+            className={`fixed inset-x-4 top-4 z-20 mx-auto flex max-w-5xl items-center justify-between rounded-full border border-border/70 px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] backdrop-blur-xl transition-[height,background-color,box-shadow] duration-300 sm:px-3 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] ${
                 scrolled
-                    ? "h-14 bg-card/85 shadow-md"
-                    : "h-16 bg-card/60 shadow-sm"
+                    ? "h-14 bg-card/90 shadow-lg"
+                    : "h-16 bg-card/70"
             }`}
         >
             <Link
                 to="/"
-                className="font-display text-xl tracking-wide transition-opacity hover:opacity-70 sm:text-2xl md:text-display-sm"
+                className="pl-2 font-display text-2xl transition-opacity hover:opacity-70 sm:text-[1.75rem]"
             >
                 Urban Cart
             </Link>

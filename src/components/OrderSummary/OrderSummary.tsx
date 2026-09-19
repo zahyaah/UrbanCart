@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 import { useCart } from "../../hooks/useCart";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
@@ -38,32 +39,42 @@ function OrderSummary({ mode = "cart", ctaLabel, onCtaClick, showCta = true }: O
 
     return (
         <Card className="w-full p-6">
-            <h2 className="mb-6 font-display text-xl">Price Details ({itemCount} items)</h2>
-            <div className="space-y-3">
+            <span className="inline-flex items-center rounded-full bg-secondary px-3 py-1 text-[10px] font-bold tracking-[0.2em] text-secondary-foreground uppercase">
+                {itemCount} {itemCount === 1 ? "item" : "items"}
+            </span>
+            <h2 className="mt-3 mb-5 font-display text-2xl">Price details</h2>
+            <div className="space-y-3 text-sm">
                 <div className="flex justify-between text-muted-foreground">
                     <span>Total MRP</span>
-                    <span className="font-medium">${subtotal.toFixed(2)}</span>
+                    <span className="font-sans font-bold tabular-nums text-foreground">${subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center text-muted-foreground">
                     <span>Platform Fee</span>
-                    <span className="font-medium text-success">FREE</span>
+                    <span className="font-sans font-bold text-success">FREE</span>
                 </div>
                 <div className="flex justify-between items-center text-muted-foreground">
                     <span>Shipping Fee</span>
-                    <span className="font-medium text-success">FREE</span>
+                    <span className="font-sans font-bold text-success">FREE</span>
                 </div>
             </div>
-            <Separator className="my-4" />
-            <div className="flex justify-between text-lg font-semibold">
-                <span>Total Amount</span>
-                <span>${subtotal.toFixed(2)}</span>
+            <Separator className="my-5" />
+            <div className="flex justify-between items-baseline">
+                <span className="text-sm font-semibold">Total Amount</span>
+                <span className="font-sans text-xl font-bold tabular-nums">${subtotal.toFixed(2)}</span>
             </div>
             {showCta && itemCount > 0 && (
                 <Button
-                    className="mt-6 min-h-[44px] w-full tracking-wide"
+                    size="lg"
+                    className="mt-6 min-h-[44px] w-full justify-between pl-6 tracking-wide"
                     onClick={handleClick}
                 >
                     {label}
+                    <span
+                        data-icon="inline-end"
+                        className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-foreground/15"
+                    >
+                        <ArrowRight className="size-4" aria-hidden="true" />
+                    </span>
                 </Button>
             )}
         </Card>

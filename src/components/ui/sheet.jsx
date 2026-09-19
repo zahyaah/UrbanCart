@@ -120,7 +120,10 @@ function SheetTitle({
     <SheetPrimitive.Title
       data-slot="sheet-title"
       className={cn(
-        "text-base font-medium text-foreground",
+        // No default font-weight -- the one consumer (CartSheet) pairs this
+        // with font-display (Abril Fatface, weight 400 only); font-medium
+        // on top would force a synthesized fake-bold serif.
+        "text-base text-foreground",
         className
       )}
       {...props}

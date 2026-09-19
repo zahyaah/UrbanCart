@@ -1,80 +1,113 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource/stint-ultra-expanded/400.css";
-@import "@fontsource/unica-one/400.css";
+@import "@fontsource/abril-fatface/400.css";
+@import "@fontsource/lato/400.css";
+@import "@fontsource/lato/700.css";
+@import "@fontsource/lato/900.css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-display: "Stint Ultra Expanded", serif;
-  --font-sans: "Unica One", sans-serif;
+  /* Abril Fatface ships one weight (400) by design -- it's a Didone
+     display face that's already visually heavy at regular. Never stack
+     font-bold/font-semibold on top of it: the browser synthesizes a fake
+     bold on a high-contrast serif, which looks uneven and cheap. */
+  --font-display: "Abril Fatface", ui-serif, serif;
+  --font-sans: "Lato", ui-sans-serif, sans-serif;
 
-  /* Unica One is a condensed display face — its glyphs read as cramped
-     (and near-clipped) at Tailwind's default leading. Loosen the small
-     sizes where that shows most. */
+  /* Relaxed leading for the body face, generous enough that paragraph
+     copy (product descriptions, form helper text) stays easy to scan. */
   --text-xs--line-height: 1.5;
-  --text-sm--line-height: 1.6;
-  --text-base--line-height: 1.65;
-  --text-display-lg: 2.5rem;
-  --text-display-lg--line-height: 1.15;
+  --text-sm--line-height: 1.55;
+  --text-base--line-height: 1.6;
+
+  /* Display scale, sized for Abril Fatface: a high-contrast Didone serif
+     reads best with neutral-to-open tracking, not the tight negative
+     tracking that suits a geometric grotesk -- squeezing it clashes its
+     thin hairlines together. --text-display-xl is clamp()-based for the
+     storefront masthead so it scales fluidly with viewport width instead
+     of jumping between two fixed breakpoint values. */
+  --text-display-xl: clamp(2.75rem, 2rem + 3vw, 4.75rem);
+  --text-display-xl--line-height: 1.05;
+  --text-display-xl--letter-spacing: 0em;
+  --text-display-lg: 2.75rem;
+  --text-display-lg--line-height: 1.1;
+  --text-display-lg--letter-spacing: 0em;
   --text-display-md: 2rem;
   --text-display-md--line-height: 1.2;
-  --text-display-sm: 1.5rem;
+  --text-display-md--letter-spacing: 0em;
+  --text-display-sm: 1.375rem;
   --text-display-sm--line-height: 1.25;
+  --text-display-sm--letter-spacing: 0.005em;
+
+  /* Lato only ships 400/700/900 (no native 500/600) -- without this, any
+     font-medium/font-semibold utility across the app (badges, labels,
+     dropdown items, alert text, ...) would ask the browser to synthesize
+     a fake-bold 500/600 instead of rendering a real cut. Remapping the
+     tokens means every such utility site-wide resolves to the real 700
+     automatically, with no need to hunt down each call site individually. */
+  --font-weight-medium: 700;
+  --font-weight-semibold: 700;
 }
 
 :root {
-  --radius: 0.625rem;
+  /* A softer, more generous base than a typical dashboard's 8-10px --
+     squircle-leaning without going cartoonish on dense controls. Individual
+     "shell" wrappers (product image trays, cart cards) go further with
+     arbitrary radii of their own. */
+  --radius: 0.875rem;
 
-  /* Light: pastel — 6FA4AF teal, F4E9D7 cream, B8C4A9 sage.
-     Text uses 37353E (borrowed from the dark palette) for 10:1 contrast. */
-  --background: oklch(0.9379 0.0267 80.25); /* F4E9D7 */
-  --foreground: oklch(0.3345 0.0158 295.71); /* 37353E */
-  --card: oklch(0.9775 0.0130 82.40);
-  --card-foreground: oklch(0.3345 0.0158 295.71);
-  --popover: oklch(0.9775 0.0130 82.40);
-  --popover-foreground: oklch(0.3345 0.0158 295.71);
-  --primary: oklch(0.6856 0.0581 212.04); /* 6FA4AF */
-  --primary-foreground: oklch(0.2525 0.0133 212.72);
-  --secondary: oklch(0.8036 0.0394 126.85); /* B8C4A9 */
-  --secondary-foreground: oklch(0.2938 0.0185 125.27);
-  --accent: oklch(0.8036 0.0394 126.85); /* B8C4A9 */
-  --accent-foreground: oklch(0.2938 0.0185 125.27);
-  --muted: oklch(0.8991 0.0327 80.99);
-  --muted-foreground: oklch(0.4765 0.0200 304.47);
-  --destructive: oklch(0.5681 0.1236 29.61);
-  --destructive-foreground: oklch(1 0 0);
-  --success: oklch(0.5591 0.0800 135.67);
-  --success-foreground: oklch(1 0 0);
-  --border: oklch(0.8540 0.0376 80.60);
-  --input: oklch(0.8540 0.0376 80.60);
-  --ring: oklch(0.5776 0.0593 213.79); /* deepened teal so the focus ring clears 3:1 */
+  /* Light: one accent (ember orange) on warm neutral paper/charcoal --
+     no competing teal/sage hues. Card sits a shade lighter than the page
+     background so it reads as lifted, not just another gray box. */
+  --background: oklch(0.9800 0.0025 90);   /* FAF9F7 warm paper */
+  --foreground: oklch(0.2100 0.0080 60);   /* 27231F warm charcoal, not pure black */
+  --card: oklch(1.0000 0 0);               /* FFFFFF */
+  --card-foreground: oklch(0.2100 0.0080 60);
+  --popover: oklch(1.0000 0 0);
+  --popover-foreground: oklch(0.2100 0.0080 60);
+  --primary: oklch(0.6450 0.1950 41);      /* ember orange -- the one accent */
+  --primary-foreground: oklch(0.9900 0 0);
+  --secondary: oklch(0.9450 0.0040 80);    /* neutral warm-gray surface */
+  --secondary-foreground: oklch(0.2100 0.0080 60);
+  --accent: oklch(0.9450 0.0040 80);       /* hover/highlight surface -- neutral, not a 2nd brand color */
+  --accent-foreground: oklch(0.2100 0.0080 60);
+  --muted: oklch(0.9600 0.0030 80);
+  --muted-foreground: oklch(0.4600 0.0100 60);
+  --destructive: oklch(0.5750 0.2100 25);  /* clear red -- distinct hue from the orange accent */
+  --destructive-foreground: oklch(0.9900 0 0);
+  --success: oklch(0.5950 0.1450 152);
+  --success-foreground: oklch(0.9900 0 0);
+  --border: oklch(0.9000 0.0050 80);
+  --input: oklch(0.9000 0.0050 80);
+  --ring: oklch(0.6450 0.1950 41);
 }
 
 .dark {
-  /* Dark: 37353E, 44444E, 715A5A, D3DAD9 */
-  --background: oklch(0.3345 0.0158 295.71); /* 37353E */
-  --foreground: oklch(0.8827 0.0077 186.87); /* D3DAD9 */
-  --card: oklch(0.3905 0.0168 285.60); /* 44444E */
-  --card-foreground: oklch(0.8827 0.0077 186.87);
-  --popover: oklch(0.3905 0.0168 285.60);
-  --popover-foreground: oklch(0.8827 0.0077 186.87);
-  --primary: oklch(0.4907 0.0303 18.24); /* 715A5A */
-  --primary-foreground: oklch(0.9491 0.0067 53.44);
-  --secondary: oklch(0.4280 0.0180 285.61);
-  --secondary-foreground: oklch(0.8827 0.0077 186.87);
-  --accent: oklch(0.4907 0.0303 18.24); /* 715A5A */
-  --accent-foreground: oklch(0.9491 0.0067 53.44);
-  --muted: oklch(0.3659 0.0172 294.71);
-  --muted-foreground: oklch(0.7784 0.0073 219.58);
-  --destructive: oklch(0.7226 0.0780 28.19);
-  --destructive-foreground: oklch(0.3345 0.0158 295.71);
-  --success: oklch(0.7174 0.0761 135.41);
-  --success-foreground: oklch(0.3345 0.0158 295.71);
-  --border: oklch(0.4791 0.0191 285.66);
-  --input: oklch(0.4791 0.0191 285.66);
-  --ring: oklch(0.7213 0.0211 17.65);
+  /* Dark: same single accent, brightened for contrast against an off-black
+     (never pure #000) warm charcoal, not the previous muddy mauve-gray. */
+  --background: oklch(0.1600 0.0040 60);   /* 1B1917 off-black, warm */
+  --foreground: oklch(0.9500 0.0030 80);   /* F1F0EE warm near-white */
+  --card: oklch(0.2150 0.0050 60);         /* 2A2724 -- lifted off the page */
+  --card-foreground: oklch(0.9500 0.0030 80);
+  --popover: oklch(0.2150 0.0050 60);
+  --popover-foreground: oklch(0.9500 0.0030 80);
+  --primary: oklch(0.7150 0.1850 45);      /* brighter ember for dark-bg contrast */
+  --primary-foreground: oklch(0.1600 0.0040 60);
+  --secondary: oklch(0.2750 0.0060 60);
+  --secondary-foreground: oklch(0.9500 0.0030 80);
+  --accent: oklch(0.2750 0.0060 60);
+  --accent-foreground: oklch(0.9500 0.0030 80);
+  --muted: oklch(0.2450 0.0055 60);
+  --muted-foreground: oklch(0.6600 0.0080 70);
+  --destructive: oklch(0.6800 0.1950 25);
+  --destructive-foreground: oklch(0.1600 0.0040 60);
+  --success: oklch(0.7000 0.1550 152);
+  --success-foreground: oklch(0.1600 0.0040 60);
+  --border: oklch(0.3100 0.0070 60);
+  --input: oklch(0.3100 0.0070 60);
+  --ring: oklch(0.7150 0.1850 45);
 }
 
 @theme inline {
@@ -119,14 +152,15 @@
   html.dark {
     color-scheme: dark;
   }
-  /* Unica One is a condensed display face — loosen it slightly so body
-     copy stays readable at small sizes. */
-  body {
-    letter-spacing: 0.015em;
-  }
+  /* font-normal here overrides any font-bold/font-semibold a call site
+     applies out of habit -- Abril Fatface only ships weight 400, and
+     synthetic bold on a Didone serif looks broken. */
   h1, h2, h3 {
-    @apply font-display;
-    letter-spacing: 0.01em;
+    @apply font-display font-normal;
+  }
+  ::selection {
+    background-color: var(--color-primary);
+    color: var(--color-primary-foreground);
   }
 }
 

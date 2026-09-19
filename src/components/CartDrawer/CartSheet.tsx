@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Minus, Plus } from "lucide-react";
+import { ArrowRight, Minus, Plus } from "lucide-react";
 
 import { useCart, type CartLine } from "../../hooks/useCart";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "../ui/sheet";
@@ -11,9 +11,9 @@ function CartSheetItem({ item }: { item: CartLine }) {
 
     return (
         <div className="flex items-center gap-3 border-b border-border pb-3">
-            <img src={item.image} alt={item.title} width={56} height={56} className="h-14 w-14 flex-shrink-0 rounded-md border border-border bg-card object-contain p-1" />
+            <img src={item.image} alt={item.title} width={56} height={56} className="h-14 w-14 flex-shrink-0 rounded-xl bg-secondary/70 object-contain p-1.5 dark:bg-secondary/40" />
             <div className="min-w-0 flex-1">
-                <p className="truncate font-display text-sm font-medium">{item.title}</p>
+                <p className="truncate font-sans text-sm font-semibold">{item.title}</p>
                 <p className="text-sm text-muted-foreground">$ {item.price.toFixed(2)}</p>
                 <div className="mt-1 flex items-center gap-2">
                     <Button
@@ -77,15 +77,23 @@ function CartSheet({ open, onOpenChange }: CartSheetProps) {
 
                 {items.length > 0 && (
                     <SheetFooter className="border-t border-border">
-                        <div className="flex justify-between font-semibold">
-                            <span>Subtotal</span>
-                            <span>$ {subtotal.toFixed(2)}</span>
+                        <div className="flex justify-between items-baseline font-semibold">
+                            <span className="text-sm">Subtotal</span>
+                            <span className="font-sans text-lg font-bold tabular-nums">$ {subtotal.toFixed(2)}</span>
                         </div>
                         <Button asChild variant="outline" className="min-h-[44px] tracking-wide">
                             <Link to="/cart" onClick={() => onOpenChange(false)}>VIEW CART</Link>
                         </Button>
-                        <Button asChild className="min-h-[44px] tracking-wide">
-                            <Link to="/checkout" onClick={() => onOpenChange(false)}>CHECKOUT</Link>
+                        <Button asChild className="min-h-[44px] justify-between pl-6 tracking-wide">
+                            <Link to="/checkout" onClick={() => onOpenChange(false)}>
+                                CHECKOUT
+                                <span
+                                    data-icon="inline-end"
+                                    className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary-foreground/15"
+                                >
+                                    <ArrowRight className="size-4" aria-hidden="true" />
+                                </span>
+                            </Link>
                         </Button>
                     </SheetFooter>
                 )}

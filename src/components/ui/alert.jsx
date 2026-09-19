@@ -41,7 +41,10 @@ function AlertTitle({
     <div
       data-slot="alert-title"
       className={cn(
-        "font-medium group-has-[>svg]/alert:col-start-2 [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground",
+        // No default font-weight here -- the one real consumer pairs this
+        // with font-display (Abril Fatface, weight 400 only); stacking
+        // font-medium on top would force a synthesized fake-bold serif.
+        "group-has-[>svg]/alert:col-start-2 [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground",
         className
       )}
       {...props}

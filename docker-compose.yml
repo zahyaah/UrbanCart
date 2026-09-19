@@ -52,9 +52,23 @@ services:
       # Dev-only fallback -- override with a real secret via a shell-exported
       # JWT_ACCESS_SECRET when running this outside local development.
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-docker-compose-local-dev-secret-not-for-production-xxxxxxxx}
-      CORS_ORIGIN: http://localhost:8080
+      # http://localhost:8080 is the dockerized frontend container below;
+      # http://localhost:5173 is the Vite dev server (`npm run dev` in
+      # client/) for local dev against this same backend -- CORS_ORIGIN
+      # takes a comma-separated list, so both are allowed. FRONTEND_URL
+      # stays a single canonical value (used for the Stripe checkout
+      # returnUrl) and must be one of the CORS_ORIGIN entries -- config.ts
+      # fails loudly at boot if it isn't.
+      CORS_ORIGIN: http://localhost:8080,http://localhost:5173
       FRONTEND_URL: http://localhost:8080
       COOKIE_SAME_SITE: lax
+      # This stack serves everything over plain HTTP on localhost -- there's
+      # no TLS termination in front of it the way Render provides in real
+      # production. NODE_ENV stays "production" (prod-parity image/build
+      # behavior), but Secure cookies require HTTPS or the browser silently
+      # discards them, breaking every authenticated request right after
+      # login. See config.ts's COOKIE_SECURE.
+      COOKIE_SECURE: "false"
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_replace_me}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_replace_me}
       SENTRY_DSN: ${SENTRY_DSN:-}

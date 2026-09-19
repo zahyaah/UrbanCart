@@ -9,7 +9,7 @@ interface ThemeContextValue {
 }
 
 const STORAGE_KEY = "urbancart-theme";
-const THEME_COLOR: Record<Theme, string> = { light: "#F4E9D7", dark: "#37353E" };
+const THEME_COLOR: Record<Theme, string> = { light: "#FAF9F7", dark: "#1B1917" };
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 

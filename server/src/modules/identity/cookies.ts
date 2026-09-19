@@ -4,7 +4,7 @@ import { ACCESS_TOKEN_TTL_SECONDS, REFRESH_TOKEN_TTL_DAYS } from "./tokens.js";
 
 const baseCookieOptions = {
     httpOnly: true,
-    secure: config.isProduction,
+    secure: config.cookieSecure,
     sameSite: config.COOKIE_SAME_SITE,
     path: "/",
 } as const;

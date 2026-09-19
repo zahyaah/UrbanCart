@@ -6,18 +6,18 @@ import { useGetProductsQuery } from "../../features/products/productsApi"
 import { staggerContainer, fadeUp, reduce } from "../../lib/motion";
 
 const SKELETON_COUNT = 8;
-const GRID = "grid grid-cols-2 gap-3 pb-8 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4";
+const GRID = "grid grid-cols-2 gap-3 pb-8 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4";
 
 function ProductsSkeleton() {
     return (
         <div className={GRID}>
             {Array.from({ length: SKELETON_COUNT }).map((_, index) => (
-                <div key={index} className="overflow-hidden rounded-lg border border-border">
+                <div key={index} className="overflow-hidden rounded-[1.5rem] ring-1 ring-foreground/[0.06]">
                     <Skeleton className="aspect-square w-full rounded-none" />
-                    <div className="space-y-2 p-2.5">
+                    <div className="space-y-2 p-3">
                         <Skeleton className="h-3 w-3/4" />
                         <Skeleton className="h-3 w-1/3" />
-                        <Skeleton className="h-11 w-full" />
+                        <Skeleton className="h-11 w-full rounded-full" />
                     </div>
                 </div>
             ))}
@@ -38,10 +38,15 @@ function Products() {
                 initial="hidden"
                 animate="show"
                 variants={reduce(fadeUp, prefersReducedMotion)}
-                className="mb-6 sm:mb-8"
+                className="mb-10 max-w-2xl pt-4 sm:mb-14 sm:pt-6"
             >
-                <h1 className="font-display text-display-sm sm:text-display-md">Everything, in one cart.</h1>
-                <p className="mt-1 text-sm text-muted-foreground">
+                <span className="inline-flex items-center rounded-full bg-secondary px-3 py-1 text-[10px] font-bold tracking-[0.2em] text-secondary-foreground uppercase">
+                    The full catalog
+                </span>
+                <h1 className="mt-4 font-display text-display-lg sm:text-display-xl">
+                    Everything, in one cart.
+                </h1>
+                <p className="mt-4 text-sm text-muted-foreground sm:text-base">
                     {data?.length ?? 0} products, hand-picked for no particular reason.
                 </p>
             </motion.div>
