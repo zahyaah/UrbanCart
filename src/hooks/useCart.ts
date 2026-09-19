@@ -108,6 +108,12 @@ export function useCart() {
         // user look like an empty-cart guest for a moment), or the session
         // is known and the server cart it depends on is still fetching.
         isLoading: isSessionLoading || (isAuthenticated && isServerCartLoading),
+        // Non-zero only once authenticated: a successful guest-cart merge
+        // always clears the local cart (see useGuestCartMerge), so items
+        // still sitting here at that point mean the merge failed (or never
+        // ran) and are otherwise invisible -- `items` above only reads the
+        // server cart once isAuthenticated is true.
+        unmergedGuestItemCount: isAuthenticated ? localItems.length : 0,
         addItem,
         incrementItem,
         decrementItem,

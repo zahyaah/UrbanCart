@@ -12,7 +12,7 @@ import { useMergeGuestCartMutation } from "../features/cart/cartApi";
 export function useGuestCartMerge() {
     const dispatch = useAppDispatch();
     const localItems = useAppSelector(selectCartItems);
-    const [mergeGuestCart] = useMergeGuestCartMutation();
+    const [mergeGuestCart, { isLoading: isMerging }] = useMergeGuestCartMutation();
 
     const mergeAndClearLocalCart = useCallback(async () => {
         if (localItems.length === 0) return;
@@ -38,5 +38,5 @@ export function useGuestCartMerge() {
         }
     }, [localItems, mergeGuestCart, dispatch]);
 
-    return { mergeAndClearLocalCart };
+    return { mergeAndClearLocalCart, isMerging };
 }
