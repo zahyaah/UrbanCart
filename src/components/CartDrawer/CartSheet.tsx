@@ -4,6 +4,7 @@ import { Minus, Plus } from "lucide-react";
 import { useCart, type CartLine } from "../../hooks/useCart";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "../ui/sheet";
 import { Button } from "../ui/button";
+import UnmergedCartNotice from "../Cart/UnmergedCartNotice";
 
 function CartSheetItem({ item }: { item: CartLine }) {
     const { incrementItem, decrementItem, removeItem } = useCart();
@@ -65,6 +66,8 @@ function CartSheet({ open, onOpenChange }: CartSheetProps) {
                 </SheetHeader>
 
                 <div className="flex-1 space-y-3 overflow-y-auto overscroll-contain px-4">
+                    <UnmergedCartNotice />
+
                     {items.length === 0 ? (
                         <p className="mt-8 text-center text-muted-foreground">Cart is empty!</p>
                     ) : (
