@@ -16,9 +16,17 @@ export function useAddToCart() {
     const { addItem } = useCart();
 
     const addProductToCart = useCallback(
-        (product: AddableProduct, quantity = 1) => {
-            addItem(product, quantity);
-            toast.success(`${product.title} added to cart`);
+        async (product: AddableProduct, quantity = 1) => {
+            try {
+                await addItem(product, quantity);
+                toast.success(`${product.title} added to cart`);
+            } catch {
+                // addItem only throws for the authenticated (server-cart)
+                // path -- the toast was previously fired unconditionally,
+                // so a failed request (cold start, CORS/CSRF rejection,
+                // network error) still told the user it worked.
+                toast.error(`Couldn't add ${product.title} to cart. Please try again.`);
+            }
         },
         [addItem]
     );

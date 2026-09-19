@@ -55,9 +55,12 @@ export function useCart() {
         ? (serverItems ?? []).map((i) => ({ id: i.productId, title: i.title, price: i.price, image: i.image, quantity: i.quantity }))
         : localItems.map((i) => ({ id: String(i.id), title: i.title, price: i.price, image: i.image, quantity: i.quantity }));
 
-    const addItem = (product: AddableProduct, quantity = 1) => {
+    const addItem = async (product: AddableProduct, quantity = 1) => {
         if (isAuthenticated) {
-            addServerItem({ productId: product.id, quantity });
+            // Awaited and unwrapped so callers (useAddToCart) can tell a
+            // real failure -- cold start, CORS/CSRF rejection, network
+            // error -- apart from success, instead of assuming it worked.
+            await addServerItem({ productId: product.id, quantity }).unwrap();
         } else {
             dispatch(addToLocalCart({ ...product, quantity }));
         }
