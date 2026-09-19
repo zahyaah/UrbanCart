@@ -1,6 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import CartItem from "../CartItem/CartItem";
 import OrderSummary from "../OrderSummary/OrderSummary";
+import UnmergedCartNotice from "./UnmergedCartNotice";
 import { useCart } from "../../hooks/useCart";
 import { staggerContainer, fadeUp, reduce } from "../../lib/motion";
 
@@ -18,6 +19,8 @@ function Cart() {
             >
                 Your Cart
             </motion.h1>
+
+            <UnmergedCartNotice />
 
             {items.length !== 0 ? (
                 <motion.div
