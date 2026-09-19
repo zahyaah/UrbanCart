@@ -1,5 +1,5 @@
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
-import { useGetMeQuery } from "../features/auth/authApi";
+import { useSession } from "./useSession";
 import { selectCartItems as selectLocalCartItems } from "../features/cart/cartSelectors";
 import {
     addToCart as addToLocalCart,
@@ -38,7 +38,7 @@ interface AddableProduct {
  * guest-vs-server branching. */
 export function useCart() {
     const dispatch = useAppDispatch();
-    const { data: user, isLoading: isSessionLoading } = useGetMeQuery();
+    const { user, isLoading: isSessionLoading } = useSession();
     const isAuthenticated = Boolean(user);
 
     const localItems = useAppSelector(selectLocalCartItems);

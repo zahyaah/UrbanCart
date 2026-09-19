@@ -74,11 +74,17 @@ function Product() {
                 >
                     <Card className="p-3">
                         <div className="mx-auto aspect-square max-h-[28rem] w-full rounded-[1.125rem] bg-secondary/70 shadow-[inset_0_1px_3px_rgba(39,35,31,0.06)] md:max-h-[32rem] dark:bg-secondary/40">
+                            {/* The one image on this page and it's above the
+                                fold -- eager is already the img default, but
+                                raise fetch priority rather than deferring it
+                                the way offscreen grid images are. */}
                             <img
                                 src={data.image}
                                 alt={data.title}
                                 width={600}
                                 height={600}
+                                fetchPriority="high"
+                                decoding="async"
                                 className="h-full w-full object-contain p-8"
                             />
                         </div>

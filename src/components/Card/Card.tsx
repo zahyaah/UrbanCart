@@ -41,6 +41,16 @@ function Card({ id, title, price, image }: CardProps) {
                             alt={title}
                             width={400}
                             height={400}
+                            // Every one of these is hotlinked straight from
+                            // fakestoreapi.com (the app's product-data
+                            // source) -- the storefront grid fires ~20
+                            // simultaneous requests to that third-party host
+                            // with no lazy-loading otherwise. loading="lazy"
+                            // defers everything below the fold instead of
+                            // contending for connections/bandwidth all at
+                            // once on first paint.
+                            loading="lazy"
+                            decoding="async"
                             className="h-full w-full object-contain p-4"
                             whileHover={prefersReducedMotion ? undefined : { scale: 1.07 }}
                             transition={{ duration: 0.45, ease: EASE }}

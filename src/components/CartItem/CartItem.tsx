@@ -22,6 +22,8 @@ function CartItem({ item }: { item: CartLine }) {
                         alt={item.title}
                         width={400}
                         height={400}
+                        loading="lazy"
+                        decoding="async"
                         className="h-full w-full object-contain p-2"
                     />
                 </div>

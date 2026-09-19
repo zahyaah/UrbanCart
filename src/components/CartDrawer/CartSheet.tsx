@@ -11,7 +11,7 @@ function CartSheetItem({ item }: { item: CartLine }) {
 
     return (
         <div className="flex items-center gap-3 border-b border-border pb-3">
-            <img src={item.image} alt={item.title} width={56} height={56} className="h-14 w-14 flex-shrink-0 rounded-xl bg-secondary/70 object-contain p-1.5 dark:bg-secondary/40" />
+            <img src={item.image} alt={item.title} width={56} height={56} loading="lazy" decoding="async" className="h-14 w-14 flex-shrink-0 rounded-xl bg-secondary/70 object-contain p-1.5 dark:bg-secondary/40" />
             <div className="min-w-0 flex-1">
                 <p className="truncate font-sans text-sm font-semibold">{item.title}</p>
                 <p className="text-sm text-muted-foreground">$ {item.price.toFixed(2)}</p>

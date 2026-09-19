@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { stepTransition, reduce } from "../../lib/motion";
 import { useCart } from "../../hooks/useCart";
-import { useGetMeQuery } from "../../features/auth/authApi";
+import { useSession } from "../../hooks/useSession";
 import StepIndicator from "./StepIndicator";
 import AddressStep from "./AddressStep";
 import PaymentStep from "./PaymentStep";
@@ -41,7 +41,7 @@ function Checkout() {
     const [state, dispatchWizard] = useReducer(wizardReducer, initialWizardState);
     const prefersReducedMotion = useReducedMotion();
     const { items, isLoading: isCartLoading } = useCart();
-    const { data: user, isLoading: isSessionLoading } = useGetMeQuery();
+    const { user, isLoading: isSessionLoading } = useSession();
 
     // POST /orders requires auth -- send a guest to log in rather than let
     // them reach the Payment step and hit a raw 401 there.

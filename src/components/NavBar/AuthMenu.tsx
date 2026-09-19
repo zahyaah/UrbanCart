@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { User, LogOut } from "lucide-react";
-import { useGetMeQuery, useLogoutMutation } from "../../features/auth/authApi";
+import { useLogoutMutation } from "../../features/auth/authApi";
+import { useSession } from "../../hooks/useSession";
 import { Button } from "../ui/button";
 import {
     DropdownMenu,
@@ -14,8 +15,9 @@ import {
 function AuthMenu() {
     // A 401 here is the ordinary "not logged in" state, not a real error --
     // isLoading covers the one moment before that's known, so a logged-out
-    // visitor never sees a flash of the wrong control.
-    const { data: user, isLoading } = useGetMeQuery();
+    // visitor never sees a flash of the wrong control. See useSession for
+    // why this reads through it rather than calling useGetMeQuery directly.
+    const { user, isLoading } = useSession();
     const [logout] = useLogoutMutation();
     const navigate = useNavigate();
 

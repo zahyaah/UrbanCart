@@ -253,6 +253,28 @@ pointed at the deployed backend's URL at *build* time (Vite inlines
 `import.meta.env.VITE_*` values into the bundle, so this can't be a runtime
 env var for a static SPA).
 
+### Known limitation: slow first load after idle
+
+`render.yaml` provisions all three services (`urbancart-postgres`,
+`urbancart-redis`, `urbancart-backend`) on Render's **free** plan. A free web
+service spins down after 15 minutes with no inbound traffic and cold-starts
+on the next request — a shopper landing on the site after a quiet period can
+see a multi-second delay before the catalog loads, on that first request
+only. This is a hosting-plan trade-off, not something the app can fix in
+code; the options are upgrading `urbancart-backend` to a paid plan (removes
+spin-down entirely), or accepting it and optionally adding an external
+uptime-ping service to keep the free instance warm (burns more of the free
+tier's monthly hours in exchange).
+
+Separately — and this one *is* addressed in code — every product image is
+hotlinked directly from `fakestoreapi.com` (the third-party product-data
+source this demo app seeds from), not served from this app's own storage.
+Without lazy-loading, the storefront grid would fire close to 20
+simultaneous cross-origin image requests on first paint; `loading="lazy"`
+on every below-the-fold image (product grid, cart line items) defers most
+of that instead, but the app still has no control over that third-party
+host's own latency or uptime.
+
 ## Architecture Decisions
 
 Recorded in [`docs/decisions/`](docs/decisions/), each with the alternatives
@@ -272,6 +294,13 @@ considered and why they were rejected:
 - [ADR-0006](docs/decisions/0006-catalog-cache-ttl-only-no-invalidation.md) —
   the Redis catalog cache is TTL-only; there's no product-write path to
   invalidate against yet.
+- [ADR-0007](docs/decisions/0007-cors-origin-frontend-url-single-source-of-truth.md)
+  — `CORS_ORIGIN`/`FRONTEND_URL` are reconciled at boot instead of left to
+  drift; the drift was silently causing production 403s.
+- [ADR-0008](docs/decisions/0008-cookie-secure-decoupled-from-node-env.md) —
+  cookie `Secure` follows its own `COOKIE_SECURE` flag instead of
+  `NODE_ENV` directly, so prod-parity Docker testing over plain HTTP
+  doesn't silently drop every auth cookie.
 
 ## CI
 
