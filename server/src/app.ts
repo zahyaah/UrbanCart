@@ -29,7 +29,15 @@ export async function buildApp() {
             // even accidentally via a body/header dump during debugging.
             redact: ["req.headers.authorization", "req.headers.cookie", "req.body.password", "*.passwordHash"],
         },
-        trustProxy: config.isProduction,
+        // Exactly one hop, not `true`. `true` trusts the WHOLE
+        // X-Forwarded-For chain and resolves req.ip to its leftmost entry --
+        // which any client can set. Since req.ip is the rate-limit key,
+        // that let an attacker rotate a fake XFF header per request and
+        // bypass the auth brute-force limit entirely (verified locally:
+        // 9 attempts -> 429 normally, 13/13 allowed when spoofing). Render
+        // puts exactly one proxy in front of this service, so trusting one
+        // hop resolves req.ip to the address Render actually observed.
+        trustProxy: config.isProduction ? 1 : false,
         // Lets a request carry its own id across service boundaries
         // (frontend -> backend -> logs -> Sentry) instead of a fresh one
         // being minted at every hop. Falls back to Fastify's default

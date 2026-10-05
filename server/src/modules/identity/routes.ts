@@ -10,7 +10,15 @@ import { db } from "../../db/index.js";
 import { users } from "../../db/schema.js";
 import { eq } from "drizzle-orm";
 
-const AUTH_RATE_LIMIT = { max: 10, timeWindow: "15 minutes" };
+// skipOnError:false, unlike the global limiter in app.ts, which stays
+// fail-open so a Redis blip can't take the whole API down. These routes are
+// the brute-force surface: with the global setting inherited, a Redis
+// outage silently removed password-guessing protection entirely (verified
+// locally: 14/14 bad logins allowed from one IP with Redis stopped).
+// Rejecting auth attempts while the limiter is blind is the right trade --
+// a login outage is recoverable, an unthrottled credential-stuffing window
+// is not.
+const AUTH_RATE_LIMIT = { max: 10, timeWindow: "15 minutes", skipOnError: false };
 
 export async function identityRoutes(app: FastifyInstance) {
     const typedApp = app.withTypeProvider<ZodTypeProvider>();
