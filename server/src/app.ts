@@ -37,7 +37,7 @@ export async function buildApp() {
         // 9 attempts -> 429 normally, 13/13 allowed when spoofing). Render
         // puts exactly one proxy in front of this service, so trusting one
         // hop resolves req.ip to the address Render actually observed.
-        trustProxy: config.isProduction ? 1 : false,
+        trustProxy: config.isProduction ? (_address: string, hop: number) => hop < 1 : false,
         // Lets a request carry its own id across service boundaries
         // (frontend -> backend -> logs -> Sentry) instead of a fresh one
         // being minted at every hop. Falls back to Fastify's default
