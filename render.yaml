@@ -64,7 +64,7 @@ services:
       - key: COOKIE_PATH_PREFIX
         value: /api
       # Proxies to trust when resolving the client IP (the rate-limit key).
-      # NOT yet verified for the Vercel -> Render chain -- set it from the
-      # "login client address" log line; see README's Deployment section.
+      # Chain verified in prod from the "login client address" log line:
+      # client -> Vercel -> Cloudflare -> Render internal -> this service.
       - key: TRUST_PROXY_HOPS
-        value: 1
+        value: "4"
