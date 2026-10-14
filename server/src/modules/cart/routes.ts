@@ -4,7 +4,6 @@ import { z } from "zod";
 import {
     getCart,
     addToCart,
-    setCartItemQuantity,
     decrementCartItem,
     removeFromCart,
     clearCart,
@@ -17,7 +16,6 @@ import {
     mergeCartResponseSchema,
     mergeCartRequestSchema,
     addToCartSchema,
-    setQuantitySchema,
     productIdParamsSchema,
 } from "./schemas.js";
 import { authenticate, requireCsrf } from "../identity/auth-plugin.js";
@@ -54,17 +52,6 @@ export async function cartRoutes(app: FastifyInstance) {
         handler: async (request) => {
             const { productId, quantity } = request.body;
             return { items: await addToCart(request.user!.id, productId, quantity) };
-        },
-    });
-
-    typedApp.route({
-        method: "PATCH",
-        url: "/cart/items/:productId",
-        preValidation: [authenticate, requireCsrf],
-        schema: { params: productIdParamsSchema, body: setQuantitySchema, response: { 200: cartResponseSchema } },
-        handler: async (request) => {
-            const { productId } = request.params;
-            return { items: await setCartItemQuantity(request.user!.id, productId, request.body.quantity) };
         },
     });
 

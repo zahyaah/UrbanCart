@@ -16,15 +16,14 @@ export function useGuestCartMerge() {
 
     const mergeAndClearLocalCart = useCallback(async () => {
         if (localItems.length === 0) return;
-        const sentItems = localItems;
 
         try {
             const result = await mergeGuestCart({
-                items: sentItems.map((item) => ({ productId: String(item.id), quantity: item.quantity })),
+                items: localItems.map((item) => ({ productId: String(item.id), quantity: item.quantity })),
                 idempotencyKey: crypto.randomUUID(),
             }).unwrap();
 
-            dispatch(removeMergedItems(sentItems));
+            dispatch(removeMergedItems(localItems));
 
             if (result.adjustments.length > 0) {
                 toast.info(
