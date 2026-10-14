@@ -15,7 +15,6 @@ export const createOrderRequestSchema = z.object({
 
 export const createOrderResponseSchema = z.object({
     orderId: z.uuid(),
-    clientSecret: z.string(),
 });
 
 export const orderItemResponseSchema = z.object({

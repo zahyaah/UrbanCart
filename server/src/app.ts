@@ -19,7 +19,6 @@ import { identityRoutes } from "./modules/identity/routes.js";
 import { catalogRoutes } from "./modules/catalog/routes.js";
 import { cartRoutes } from "./modules/cart/routes.js";
 import { orderRoutes } from "./modules/orders/routes.js";
-import { stripeWebhookRoutes } from "./modules/orders/webhook-routes.js";
 
 export async function buildApp() {
     const app = Fastify({
@@ -141,7 +140,6 @@ export async function buildApp() {
     app.register(catalogRoutes);
     app.register(cartRoutes);
     app.register(orderRoutes);
-    app.register(stripeWebhookRoutes);
 
     return app;
 }

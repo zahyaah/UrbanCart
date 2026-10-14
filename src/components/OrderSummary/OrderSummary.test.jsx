@@ -25,7 +25,7 @@ describe("OrderSummary", () => {
     it("shows the total as exactly the subtotal -- no discount is applied here or by the server", () => {
         // ADR: this used to show a decorative "$5 + 5% off" that never
         // matched what checkout actually charged. Total Amount must equal
-        // what Stripe is asked to charge (server/src/modules/orders'
+        // the order total the server records (server/src/modules/orders'
         // snapshotCartForOrder computes the same plain sum), so there's no
         // discount math on either side until a real one exists on both.
         renderSummary([line({ price: 100, quantity: 1 })]);

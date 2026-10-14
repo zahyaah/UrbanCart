@@ -1,26 +1,17 @@
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useSearchParams } from "react-router-dom";
 import { useGetOrderQuery } from "../../features/orders/ordersApi";
 import { Card } from "../ui/card";
 import { Button } from "../ui/button";
 import { Alert, AlertDescription } from "../ui/alert";
 import ErrorPage from "../ErrorPage/ErrorPage";
 
-// Landed on after Stripe's own redirect (return_url on the Checkout
-// Session -- see server's createCheckoutSession). The order's status here
-// comes from the server, not from anything the client-side confirm() call
-// returned -- the webhook, not this page, is what actually marks an order
-// paid, and it can arrive slightly after this redirect. Polling until it
-// does is what turns "payment processing" into "Order Placed!" without a
-// manual refresh.
+// Landed on after the demo pay page succeeds. The status shown comes from
+// the server's order record, not from client state.
 function ConfirmationPage() {
     const [searchParams] = useSearchParams();
     const orderId = searchParams.get("orderId");
 
-    const { data: order, isLoading, isError } = useGetOrderQuery(orderId ?? "", {
-        skip: !orderId,
-        pollingInterval: 2000,
-        skipPollingIfUnfocused: true,
-    });
+    const { data: order, isLoading, isError } = useGetOrderQuery(orderId ?? "", { skip: !orderId });
 
     if (!orderId || isError) {
         return <ErrorPage errorMessage="We couldn't find that order." />;
@@ -30,15 +21,9 @@ function ConfirmationPage() {
         return <p className="py-16 text-center text-muted-foreground">Loading your order…</p>;
     }
 
+    // Not paid yet (e.g. opened by URL): the pay page is where that happens.
     if (order.status === "pending_payment") {
-        return (
-            <div className="mx-auto max-w-md pb-12">
-                <Card className="space-y-4 p-8 text-center">
-                    <h1 className="font-display text-display-md">Confirming your payment…</h1>
-                    <p className="text-muted-foreground">This usually takes just a moment.</p>
-                </Card>
-            </div>
-        );
+        return <Navigate to={`/checkout/${order.id}`} replace />;
     }
 
     if (order.status === "failed" || order.status === "cancelled") {

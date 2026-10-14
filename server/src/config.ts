@@ -39,8 +39,6 @@ const envSchema = z.object({
     // bucket. Too high: clients can spoof their own address. Set from what
     // the "login client address" log line shows -- see README.
     TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(1),
-    STRIPE_SECRET_KEY: z.string().min(1),
-    STRIPE_WEBHOOK_SECRET: z.string().min(1),
     FRONTEND_URL: z.string().min(1),
     // Optional: absent means catalog caching is a no-op and rate limiting
     // falls back to its in-memory store -- fine for local dev without
@@ -78,9 +76,9 @@ const frontendOrigin = parseOrigin(parsed.data.FRONTEND_URL, "FRONTEND_URL");
 
 // @fastify/cors (app.ts) and the CSRF Origin check (auth-plugin.ts) both
 // read corsOrigins as their allowlist -- one source of truth, so the two
-// checks can't drift apart from each other. FRONTEND_URL is also used
-// separately to build the Stripe checkout returnUrl (orders/routes.ts), so
-// it isn't silently folded into corsOrigins here: doing that would let
+// checks can't drift apart from each other. FRONTEND_URL (the canonical
+// frontend origin; nothing else reads it since the Stripe returnUrl was
+// removed) isn't silently folded into corsOrigins here: doing that would let
 // FRONTEND_URL silently *widen* what CORS trusts whenever it didn't
 // already agree with CORS_ORIGIN, changing the CORS trust boundary based
 // on which env var an operator happened to remember to update. Failing

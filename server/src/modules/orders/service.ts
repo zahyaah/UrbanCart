@@ -1,8 +1,8 @@
-import { eq, and, inArray, asc } from "drizzle-orm";
+import { eq, and, inArray, asc, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "../../db/index.js";
 import { cartItems, products, orders, orderItems } from "../../db/schema.js";
-import { Errors } from "../../lib/errors.js";
+import { ApiError, Errors } from "../../lib/errors.js";
 import { shippingAddressSchema } from "./schemas.js";
 
 export type ShippingAddress = z.infer<typeof shippingAddressSchema>;
@@ -31,6 +31,7 @@ export async function snapshotCartForOrder(userId: string): Promise<CartSnapshot
             quantity: cartItems.quantity,
             title: products.title,
             priceCents: products.priceCents,
+            isActive: products.isActive,
         })
         .from(cartItems)
         .innerJoin(products, eq(cartItems.productId, products.id))
@@ -39,6 +40,17 @@ export async function snapshotCartForOrder(userId: string): Promise<CartSnapshot
 
     if (rows.length === 0) {
         throw Errors.badRequest("Cart is empty");
+    }
+
+    // A product can be deactivated while it sits in someone's cart; cart
+    // writes already refuse inactive products, so the order must too. 409
+    // with the offending lines, so the client can name them and the shopper
+    // can remove them -- nothing is silently dropped from what they ordered.
+    const inactive = rows.filter((r) => !r.isActive);
+    if (inactive.length > 0) {
+        throw new ApiError(409, "PRODUCTS_UNAVAILABLE", "Some items in your cart are no longer available", {
+            products: inactive.map((r) => ({ productId: r.productId, title: r.title })),
+        });
     }
 
     const lines = rows.map((r) => ({
@@ -54,15 +66,14 @@ export async function snapshotCartForOrder(userId: string): Promise<CartSnapshot
 
 /** Writes the order + order_items (price/title snapshotted -- see
  * ADR-0004) inside the caller's transaction, alongside the idempotency
- * success record. Does not touch the cart -- the cart is cleared once
- * payment is confirmed by the webhook, not at order-creation time, so an
- * abandoned pending order doesn't silently empty the shopper's cart. */
+ * success record. Does not touch the cart -- the paid items are removed
+ * from it by payOrder, not at order-creation time, so an abandoned pending
+ * order doesn't silently empty the shopper's cart. */
 export async function applyOrderCreation(
     tx: Tx,
     orderId: string,
     userId: string,
     snapshot: CartSnapshot,
-    stripeSessionId: string,
     shippingAddress: ShippingAddress
 ): Promise<{ orderId: string }> {
     const [order] = await tx
@@ -71,7 +82,6 @@ export async function applyOrderCreation(
             id: orderId,
             userId,
             subtotalCents: snapshot.subtotalCents,
-            stripeSessionId,
             shippingFullName: shippingAddress.fullName,
             shippingAddressLine1: shippingAddress.addressLine1,
             shippingCity: shippingAddress.city,
@@ -134,32 +144,40 @@ export async function getOrderById(userId: string, orderId: string): Promise<Ord
     };
 }
 
-/** Idempotent by construction, not by a ledger: the conditional UPDATE is a
- * no-op if already applied, which is all a webhook handler needs --
- * Stripe's own at-least-once redelivery means this can run more than once
- * for the same event. See SPEC-orders.md's design section for why this
- * doesn't need the heavier idempotency_keys mechanism the client-facing
- * routes use (no client is waiting on a specific replayed response here). */
-export async function markOrderPaidByStripeSession(stripeSessionId: string): Promise<void> {
-    const [order] = await db
-        .update(orders)
-        .set({ status: "paid" })
-        .where(and(eq(orders.stripeSessionId, stripeSessionId), eq(orders.status, "pending_payment")))
-        .returning();
+/** Demo payment for the caller's own order. Moves only pending_payment ->
+ * paid, then removes the items THIS order covered from the cart -- not the
+ * whole cart: a shopper could have added something new while the order was
+ * pending, and that addition was never part of it. Already paid: returns
+ * the order unchanged, so a double-click or retry is harmless. Returns null
+ * when the order doesn't exist or belongs to someone else (the route maps
+ * both to the same 404). The row lock serializes concurrent pays. */
+export async function payOrder(userId: string, orderId: string): Promise<OrderView | null> {
+    const outcome = await db.transaction(async (tx) => {
+        const [order] = await tx
+            .select({ id: orders.id, status: orders.status })
+            .from(orders)
+            .where(and(eq(orders.id, orderId), eq(orders.userId, userId)))
+            .for("update");
+        if (!order) return "not_found" as const;
+        if (order.status === "paid") return "ok" as const;
+        if (order.status !== "pending_payment") return "not_payable" as const;
 
-    // No row updated: either an unknown session, or a redelivered event for
-    // an order already marked paid -- both are a correct no-op, matching
-    // the idempotent-by-construction design above.
-    if (!order) return;
+        await tx.update(orders).set({ status: "paid", updatedAt: sql`now()` }).where(eq(orders.id, order.id));
 
-    // Only remove the items THIS order paid for, not the whole cart -- a
-    // shopper could have added something new while payment was pending, and
-    // that new addition was never part of what they just paid for.
-    const paidItems = await db.query.orderItems.findMany({ where: eq(orderItems.orderId, order.id) });
-    const paidProductIds = paidItems.map((i) => i.productId);
-    if (paidProductIds.length > 0) {
-        await db
-            .delete(cartItems)
-            .where(and(eq(cartItems.userId, order.userId), inArray(cartItems.productId, paidProductIds)));
-    }
+        const paidItems = await tx
+            .select({ productId: orderItems.productId })
+            .from(orderItems)
+            .where(eq(orderItems.orderId, order.id));
+        const paidProductIds = paidItems.map((i) => i.productId);
+        if (paidProductIds.length > 0) {
+            await tx
+                .delete(cartItems)
+                .where(and(eq(cartItems.userId, userId), inArray(cartItems.productId, paidProductIds)));
+        }
+        return "ok" as const;
+    });
+
+    if (outcome === "not_found") return null;
+    if (outcome === "not_payable") throw Errors.conflict("This order can no longer be paid");
+    return getOrderById(userId, orderId);
 }

@@ -1,9 +1,10 @@
 # Urban Cart
 
 A full-stack e-commerce app: React/Redux frontend, a Fastify/Postgres backend
-with real authentication, a server-side cart, and Stripe Checkout. Browse
-products, manage a cart (merged automatically on login), and pay through an
-embedded Stripe Payment Element.
+with real authentication, a server-side cart, and a demo checkout. Browse
+products, manage a cart (merged automatically on login), place an order, and
+"pay" with a demo button — no real payment is taken and no card details are
+collected.
 
 **Live:** not yet deployed — see [Deployment](#deployment) to stand up the
 backend on Render; the frontend's hosting target is a separate decision not
@@ -13,11 +14,11 @@ made yet.
 
 **Frontend:** React 18 + Vite 5 + TypeScript, Redux Toolkit (RTK Query for
 every API slice), React Router v6, Tailwind CSS v4 + shadcn/ui, Framer
-Motion, Stripe Elements. Vitest + React Testing Library, Playwright.
+Motion. Vitest + React Testing Library, Playwright.
 
 **Backend** (`server/`): Fastify v5 + TypeScript, Postgres via Drizzle ORM,
-Redis (catalog cache + shared rate-limit store), Stripe (Checkout Sessions +
-webhooks), Sentry (error reporting), pino structured logging. Vitest against
+Redis (catalog cache + shared rate-limit store), Sentry (error reporting),
+pino structured logging. Vitest against
 a real Postgres/Redis instance, not mocks.
 
 **Infra:** Docker Compose (full local stack — Postgres, Redis, backend,
@@ -32,7 +33,7 @@ for load testing.
    ├── React SPA (nginx in prod, Vite dev server locally)
    │     RTK Query ──────────────┐
    │                             ▼
-   └── Fastify API (server/) ────┼──── Stripe (Checkout Sessions, webhooks)
+   └── Fastify API (server/) ────┤
          │          │            │
          ▼          ▼            ▼
       Postgres    Redis       Sentry
@@ -41,7 +42,7 @@ for load testing.
                     store)
 ```
 
-The frontend never talks to Postgres, Redis, Stripe, or Sentry directly —
+The frontend never talks to Postgres, Redis, or Sentry directly —
 everything goes through the Fastify API, which is the only thing that holds
 credentials for any of them. Auth is httpOnly-cookie session tokens (not
 localStorage) with a double-submit CSRF token; see
@@ -59,9 +60,6 @@ docker compose exec backend node dist/db/seed.js   # first run only
 ```
 
 Frontend at `http://localhost:8080`, backend at `http://localhost:3001`.
-Stripe checkout will fail against the placeholder key in `docker-compose.yml`
-— override `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET` as shell-exported env
-vars (Compose picks them up automatically) to test payment for real.
 
 ### Option B: Run frontend and backend directly (faster iteration)
 
@@ -70,7 +68,7 @@ vars (Compose picks them up automatically) to test payment for real.
 docker compose up -d postgres redis
 
 cd server
-cp .env.example .env   # fill in a real JWT_ACCESS_SECRET; Stripe/Redis/Sentry optional
+cp .env.example .env   # fill in a real JWT_ACCESS_SECRET; Redis/Sentry optional
 npm install
 npm run db:migrate
 npm run db:seed
@@ -115,16 +113,17 @@ npm run dev              # http://localhost:5173
 - **Server-side cart with guest merge.** Add to cart while logged out; log in
   and it merges into your account's server cart automatically, quantity-capped
   and race-condition-safe (`REPEATABLE READ` + serialization retry).
-- **Real checkout.** Stripe Checkout Sessions with an embedded Payment
-  Element, idempotency-key-protected order creation (a double-submitted
-  "Place Order" click creates exactly one order and one Stripe session), and
-  a webhook-driven order-paid state (never the client-side redirect alone).
+- **Demo checkout.** Idempotency-key-protected order creation (a
+  double-submitted "Place Order" click creates exactly one order), totals
+  computed server-side from current DB prices, and a demo pay step
+  (`POST /orders/:id/pay`) that moves the caller's own pending order to paid.
+  No payment provider, no card fields, no money moves.
 - **Shipping address**, collected and persisted on the order at purchase
   time.
 - **Redis-cached catalog**, cache-aside with a short TTL — see
   [ADR-0006](docs/decisions/0006-catalog-cache-ttl-only-no-invalidation.md).
-- **Code-split frontend bundle** — Stripe's SDK, the checkout wizard, and
-  auth pages load on demand, not on first paint. See [Performance](#performance).
+- **Code-split frontend bundle** — the checkout wizard and auth pages load
+  on demand, not on first paint. See [Performance](#performance).
 - **Light and dark themes**, toggled from the nav bar, persisted to
   `localStorage`.
 - **Responsive layout**, 44px minimum touch targets, tested at 375/768/1280px.
@@ -143,7 +142,7 @@ pricing math, `localStorage` cart-state validation, and component tests for
 
 **Playwright e2e suite — currently stale.** It predates the Phase C backend
 rewrite: it expects a 4-step wizard with a "Review" step (removed), mock
-card-number validation (replaced by real Stripe Elements), and doesn't
+card-number validation (since removed), and doesn't
 account for the auth gate now in front of checkout. Known debt, not
 silently broken — see [ADR](docs/decisions/) list for what actually changed
 underneath it. Code-splitting the bundle (this phase) was instead verified
@@ -152,7 +151,8 @@ with the unit suites plus a manual Playwright smoke pass across every route.
 ## Performance
 
 The frontend bundle (`vite build`) was one ~616 KB/200 KB-gzip JS file —
-every route, including Stripe's Elements SDK (only needed at `/checkout`),
+every route, including Stripe's Elements SDK (only needed at `/checkout`;
+the app has since dropped Stripe entirely, so these numbers predate that),
 loaded eagerly. `src/App.tsx` now lazy-loads every route except the product
 listing (the landing page — must stay eager so first paint isn't gated on a
 chunk) behind `React.lazy`/`Suspense`.
@@ -165,8 +165,7 @@ measurement):
 | Main chunk | 616.28 KB (200.10 KB gzip) | 580.71 KB (190.24 KB gzip) |
 | Page-specific code | bundled into the main chunk | ~39 KB across 7 on-demand chunks (Checkout: 21.9 KB, Cart: 3.0 KB, Product: 3.2 KB, auth pages, confirmation, `OrderSummary`) |
 
-A shopper who never reaches `/checkout` never downloads Stripe's SDK or the
-checkout wizard.
+A shopper who never reaches `/checkout` never downloads the checkout wizard.
 
 **Core Web Vitals**, via Lighthouse (desktop, `chrome-launcher`, against a
 production build served by `vite preview`; each number is the more
@@ -225,7 +224,7 @@ correctly refusing requests, not a realistic journey):
 |---|---|
 | Register | 5/5 succeeded (201) |
 | Add to cart | 5/5 succeeded (200) |
-| Create order | 5/5 reached the order-creation endpoint correctly (a placeholder Stripe key in local `.env` makes Stripe itself return 401 "Invalid API Key" — expected without a real test-mode key) |
+| Create order | 5/5 reached the order-creation endpoint correctly (measured while orders still called Stripe; `k6/journey.js` now also exercises the demo pay step) |
 | p95 request duration | 465 ms (dominated by bcrypt's deliberately-slow password hashing during register — see `security-and-hardening`'s password-hashing guidance) |
 
 ## Deployment
@@ -237,8 +236,7 @@ database, and a Key Value (Redis) instance together.
 1. Push this branch to GitHub.
 2. Render dashboard → **New** → **Blueprint** → select this repo.
 3. Render reads `render.yaml` and prompts for the `sync: false` secrets:
-   `JWT_ACCESS_SECRET` (32+ random characters), `STRIPE_SECRET_KEY`,
-   `STRIPE_WEBHOOK_SECRET`, `SENTRY_DSN` (optional — leave blank to keep
+   `JWT_ACCESS_SECRET` (32+ random characters), `SENTRY_DSN` (optional — leave blank to keep
    Sentry a no-op), `CORS_ORIGIN` and `FRONTEND_URL` (wherever the frontend
    ends up hosted).
 4. Deploy. `dockerCommand` runs the DB migration before starting the server
