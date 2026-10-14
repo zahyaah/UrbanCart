@@ -1,8 +1,10 @@
 import { db, pool } from "./index.js";
 import { products } from "./schema.js";
 import { loadSeedProducts } from "./seed-data.js";
+import { assertSafeSeedTarget } from "./seed-guard.js";
 
 async function main() {
+    assertSafeSeedTarget(process.env);
     const seedProducts = loadSeedProducts();
     console.log(`Seeding ${seedProducts.length} products (replacing any existing catalog)...`);
 

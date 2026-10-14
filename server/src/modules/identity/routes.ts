@@ -7,6 +7,7 @@ import { setAuthCookies, clearAuthCookies } from "./cookies.js";
 import { hashRefreshToken } from "./tokens.js";
 import { authenticate, requireCsrf } from "./auth-plugin.js";
 import { Errors } from "../../lib/errors.js";
+import { config } from "../../config.js";
 import { db } from "../../db/index.js";
 import { users } from "../../db/schema.js";
 import { eq } from "drizzle-orm";
@@ -19,7 +20,7 @@ import { eq } from "drizzle-orm";
 // Rejecting auth attempts while the limiter is blind is the right trade --
 // a login outage is recoverable, an unthrottled credential-stuffing window
 // is not.
-const AUTH_RATE_LIMIT = { max: 10, timeWindow: "15 minutes", skipOnError: false };
+const AUTH_RATE_LIMIT = { max: config.AUTH_RATE_LIMIT_MAX, timeWindow: "15 minutes", skipOnError: false };
 
 // A second login limit keyed on the target account, on top of the per-IP
 // one. The Render origin is publicly reachable, so a client calling it
@@ -29,7 +30,7 @@ const AUTH_RATE_LIMIT = { max: 10, timeWindow: "15 minutes", skipOnError: false 
 // a known email out of password login for one window -- accepted, the
 // window is short and a lockout is recoverable, a guessed password isn't.
 const LOGIN_EMAIL_RATE_LIMIT = {
-    max: 20,
+    max: config.LOGIN_EMAIL_RATE_LIMIT_MAX,
     timeWindow: "15 minutes",
     skipOnError: false,
     // request.body.email is already trimmed + lowercased by credentialsSchema
@@ -44,13 +45,13 @@ const LOGIN_EMAIL_RATE_LIMIT = {
 // behind one NAT or proxy (and by every user at once if TRUST_PROXY_HOPS is
 // wrong), so a busy shared IP would 429 refreshes and log users out en
 // masse. A token rotates on every successful refresh, so a legitimate one
-// is presented about once; 10 only bounds one token being replayed in a
+// is presented about once; the limit only bounds one token replayed in a
 // loop. Fail-open: a Redis blip must not log every active user out.
 // Trade-off: a client inventing a new bogus token per request gets a fresh
 // bucket each time -- harmless for guessing (2^256), and the lookup it
 // costs is one indexed SELECT.
 const REFRESH_RATE_LIMIT = {
-    max: 10,
+    max: config.REFRESH_RATE_LIMIT_MAX,
     timeWindow: "15 minutes",
     skipOnError: true,
     keyGenerator: (request: FastifyRequest) => {

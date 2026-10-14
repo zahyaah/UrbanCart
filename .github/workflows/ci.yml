@@ -120,16 +120,40 @@ jobs:
       - name: Build
         run: npm run build
 
-  # Currently red, tracked rather than hidden: the suite predates Phase C's
-  # backend rewrite (expects a 4-step wizard with a removed "Review" step,
-  # mock card validation since removed, no auth gate on
-  # checkout). See README.md's Testing section. continue-on-error keeps this
-  # visible without blocking every unrelated PR on a known, pre-existing gap
-  # -- same pattern as the audit job below.
+  # Runs against a real backend (see playwright.config.js). Still
+  # continue-on-error until it has had a green run here; drop that line
+  # once it has, so e2e failures block merges like the other jobs.
   e2e:
     name: End-to-end tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     continue-on-error: true
+    # The storefront loads its catalog from the backend, which
+    # playwright.config.js starts (migrate, seed, serve) against these
+    # services. Without them, /products fails and no product card renders.
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: urbancart
+          POSTGRES_PASSWORD: urbancart_dev_only
+          POSTGRES_DB: urbancart_e2e
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U urbancart -d urbancart_e2e"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
 
@@ -137,8 +161,15 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            server/package-lock.json
 
       - run: npm ci
+
+      - name: Install backend dependencies
+        run: npm ci
+        working-directory: server
 
       # Browsers are ~200 MB; key the cache on the resolved Playwright version
       # so a dependency bump fetches matching binaries instead of stale ones.
@@ -163,10 +194,14 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
 
-      # playwright.config.js builds the app and serves it via `vite preview`,
-      # so the suite runs against the production bundle, not the dev server.
+      # playwright.config.js starts the backend, builds the app and serves it
+      # via `vite preview` with VITE_API_URL=/api proxied to the backend --
+      # the production bundle and the same /api topology as Vercel.
       - name: Run Playwright suite
         run: npx playwright test
+        env:
+          E2E_DATABASE_URL: postgres://urbancart:urbancart_dev_only@localhost:5433/urbancart_e2e
+          E2E_REDIS_URL: redis://localhost:6379/2
 
       - name: Upload Playwright report
         if: failure()

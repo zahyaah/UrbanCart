@@ -56,7 +56,10 @@ their reasoning.
 
 ```bash
 docker compose up --build
-docker compose exec backend node dist/db/seed.js   # first run only
+# first run only. The seed script refuses NODE_ENV=production (it wipes the
+# catalog), and the compose backend runs with NODE_ENV=production for
+# image parity, so override it for this one command:
+docker compose exec -e NODE_ENV=development backend node dist/db/seed.js
 ```
 
 Frontend at `http://localhost:8080`, backend at `http://localhost:3001`.
@@ -91,7 +94,7 @@ npm run dev              # http://localhost:5173
 | `npm run lint` | ESLint |
 | `npm test` | Unit tests (Vitest) |
 | `npm run coverage` | Unit tests with a coverage report |
-| `npm run test:e2e` | Playwright suite — **currently stale**, see [Testing](#testing) |
+| `npm run test:e2e` | Playwright suite against a real backend — see [Testing](#testing) |
 | `npm run typecheck` | TypeScript, no emit |
 
 **Backend** (`server/`):
@@ -140,13 +143,27 @@ cache-aside catalog layer.
 pricing math, `localStorage` cart-state validation, and component tests for
 `OrderSummary`, `CartItem`, and the checkout address step.
 
-**Playwright e2e suite — currently stale.** It predates the Phase C backend
-rewrite: it expects a 4-step wizard with a "Review" step (removed), mock
-card-number validation (since removed), and doesn't
-account for the auth gate now in front of checkout. Known debt, not
-silently broken — see [ADR](docs/decisions/) list for what actually changed
-underneath it. Code-splitting the bundle (this phase) was instead verified
-with the unit suites plus a manual Playwright smoke pass across every route.
+**Playwright e2e suite** (cart, catalog, checkout; desktop Chrome and
+Pixel 5) runs against a real backend. `playwright.config.js` migrates the
+database at `E2E_DATABASE_URL`, resets it and the Redis database at
+`E2E_REDIS_URL` (`server/src/db/reset-e2e.ts`, which only touches a local
+database named `*_e2e`), seeds the catalog, starts the API, and serves the
+production build with `VITE_API_URL=/api` proxied to it — the same `/api`
+topology as the Vercel deployment. Checkout tests register a throwaway
+account through the API per test; no credentials are stored anywhere.
+
+Defaults match docker-compose's Postgres and Redis; create the e2e database
+once:
+
+```bash
+docker compose up -d postgres redis
+docker compose exec postgres createdb -U urbancart urbancart_e2e
+npm run test:e2e
+```
+
+The backend runs with raised auth rate limits (`AUTH_RATE_LIMIT_MAX` and
+friends, see `server/src/config.ts`) because every test comes from one IP;
+production uses the defaults.
 
 ## Performance
 
@@ -242,8 +259,11 @@ database, and a Key Value (Redis) instance together.
 4. Deploy. `dockerCommand` runs the DB migration before starting the server
    on every deploy (idempotent — drizzle's migrator skips already-applied
    migrations), so no separate manual migration step is needed.
-5. Seed the catalog once, from Render's shell for the backend service:
-   `node dist/db/seed.js`.
+5. Load the catalog. `node dist/db/seed.js` **refuses to run here** by
+   design: it wipes the products table, so it only runs with
+   `NODE_ENV` other than `production` against a local database host
+   (`server/src/db/seed-guard.ts`). There is no supported path yet for
+   loading the catalog into a production database.
 
 The frontend isn't part of this Blueprint — it's a static build deployed to
 Vercel. It must reach the API **through its own origin**: `vercel.json`
@@ -321,7 +341,8 @@ considered and why they were rejected:
 
 `.github/workflows/ci.yml` runs on every pull request and push to `main`:
 lint, unit tests with coverage, and a production build in one job; the
-Playwright suite in another (currently red — see [Testing](#testing)).
+Playwright suite in another, against Postgres and Redis service containers
+(still `continue-on-error` until it has gone green in CI).
 
 A dependency audit runs alongside as an advisory job, reported rather than
 enforced — current advisories are transitive dev-tooling issues (Vite/esbuild,

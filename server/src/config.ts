@@ -4,6 +4,8 @@ import { z } from "zod";
 // it when it's left unset -- an optional value should treat that the same
 // as genuinely absent, not fail min(1) validation at boot.
 const optionalString = () => z.preprocess((v) => (v === "" ? undefined : v), z.string().min(1).optional());
+const positiveIntWithDefault = (fallback: number) =>
+    z.preprocess((v) => (v === "" ? undefined : v), z.coerce.number().int().positive().default(fallback));
 
 // Validated once at boot. A misconfigured deployment should fail loudly at
 // startup, not fail confusingly on the first request that touches the
@@ -40,6 +42,13 @@ const envSchema = z.object({
     // the "login client address" log line shows -- see README.
     TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(1),
     FRONTEND_URL: z.string().min(1),
+    // Auth rate limits (attempts per 15 minutes). The defaults ARE the
+    // production values; only the e2e suite raises them, because all its
+    // traffic comes from one IP. Deliberately no "disable" setting: the
+    // lowest-risk misconfiguration is a limit that's too high, not none.
+    AUTH_RATE_LIMIT_MAX: positiveIntWithDefault(10), // login + register, per IP
+    LOGIN_EMAIL_RATE_LIMIT_MAX: positiveIntWithDefault(20), // login, per email
+    REFRESH_RATE_LIMIT_MAX: positiveIntWithDefault(10), // refresh, per token
     // Optional: absent means catalog caching is a no-op and rate limiting
     // falls back to its in-memory store -- fine for local dev without
     // Docker, wrong once more than one instance is running. See lib/redis.ts.
