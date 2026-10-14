@@ -2,6 +2,7 @@ import { eq, and } from "drizzle-orm";
 import { db } from "../../db/index.js";
 import { products, type Product as ProductRow } from "../../db/schema.js";
 import { redis } from "../../lib/redis.js";
+import { catalogListKey, catalogProductKey } from "./cache-keys.js";
 
 // Catalog is seed-only right now (no admin/write path exists), so a
 // short TTL is the only invalidation strategy needed -- there's nothing to
@@ -43,14 +44,14 @@ function toPublicProduct(row: ProductRow): PublicProduct {
 }
 
 export async function listProducts(): Promise<PublicProduct[]> {
-    return cached("catalog:products", LIST_TTL_SECONDS, async () => {
+    return cached(catalogListKey, LIST_TTL_SECONDS, async () => {
         const rows = await db.query.products.findMany({ where: eq(products.isActive, true) });
         return rows.map(toPublicProduct);
     });
 }
 
 export async function getProductById(id: string): Promise<PublicProduct | null> {
-    return cached(`catalog:product:${id}`, DETAIL_TTL_SECONDS, async () => {
+    return cached(catalogProductKey(id), DETAIL_TTL_SECONDS, async () => {
         const row = await db.query.products.findFirst({
             where: and(eq(products.id, id), eq(products.isActive, true)),
         });

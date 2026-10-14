@@ -124,6 +124,8 @@ export const orders = pgTable("orders", {
     userId: uuid("user_id").notNull().references(() => users.id),
     status: orderStatusEnum().notNull().default("pending_payment"),
     subtotalCents: integer("subtotal_cents").notNull(),
+    // Unused since the Stripe integration was removed (demo payment, see
+    // payOrder). Left in place: dropping a column needs its own migration.
     stripeSessionId: text("stripe_session_id"),
     // Snapshotted at order-creation time, same reasoning as order_items'
     // price/title: a later edit to the user's saved address (if that ever
@@ -169,8 +171,8 @@ export const idempotencyKeys = pgTable(
         responseStatus: integer("response_status"),
         responseBody: jsonb("response_body"),
         createdAt: timestamp("created_at").notNull().defaultNow(),
-        // created_at + 7 days -- comfortably outlives Stripe's ~3-day webhook
-        // redelivery window (doubt review finding #7).
+        // created_at + 7 days -- far longer than any client retry of the same
+        // attempt (see RETENTION_DAYS in lib/idempotency.ts).
         expiresAt: timestamp("expires_at").notNull(),
     },
     (table) => [

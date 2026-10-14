@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
-import { snapshotCartForOrder, applyOrderCreation, getOrderById } from "./service.js";
+import { snapshotCartForOrder, applyOrderCreation, getOrderById, payOrder } from "./service.js";
 import {
     createOrderRequestSchema,
     createOrderResponseSchema,
@@ -11,7 +11,6 @@ import {
 } from "./schemas.js";
 import { authenticate, requireCsrf } from "../identity/auth-plugin.js";
 import { Errors } from "../../lib/errors.js";
-import { createCheckoutSession } from "../../lib/stripe.js";
 import { db } from "../../db/index.js";
 import { runWithSerializationRetry } from "../../lib/db-retry.js";
 import {
@@ -22,7 +21,6 @@ import {
     recordIdempotencySuccess,
     recordIdempotencyFailure,
 } from "../../lib/idempotency.js";
-import { config } from "../../config.js";
 
 const ORDER_CREATE_SCOPE = "orders:create";
 
@@ -69,30 +67,15 @@ export async function orderRoutes(app: FastifyInstance) {
             }
 
             try {
-                // Generated here, before the Stripe call, specifically so
-                // the return_url below can name it -- the alternative would
-                // need a "look up an order by Stripe session id" endpoint
-                // just to land back on the right confirmation page, for a
-                // value this handler already knows before it ever talks to
-                // Stripe.
                 const orderId = randomUUID();
-
-                // The Stripe call is a real network request -- it runs
-                // outside any DB transaction, using its OWN idempotency key
-                // (derived from ours) as defense in depth. See
-                // SPEC-orders.md's doubt review, finding #12.
+                // Items and amount come only from the live server cart and
+                // current DB prices -- never from the request body.
                 const snapshot = await snapshotCartForOrder(userId);
-                const session = await createCheckoutSession({
-                    orderId,
-                    subtotalCents: snapshot.subtotalCents,
-                    idempotencyKey: idempotencyKeyHeader,
-                    returnUrl: `${config.FRONTEND_URL}/checkout/confirmation?orderId=${orderId}`,
-                });
 
                 const result = await runWithSerializationRetry(() =>
                     db.transaction(async (tx) => {
-                        await applyOrderCreation(tx, orderId, userId, snapshot, session.id, request.body.shippingAddress);
-                        const responseBody = { orderId, clientSecret: session.clientSecret };
+                        await applyOrderCreation(tx, orderId, userId, snapshot, request.body.shippingAddress);
+                        const responseBody = { orderId };
                         await recordIdempotencySuccess(tx, claim.id, 201, responseBody);
                         return responseBody;
                     })
@@ -104,6 +87,21 @@ export async function orderRoutes(app: FastifyInstance) {
                 await recordIdempotencyFailure(claim.id);
                 throw err;
             }
+        },
+    });
+
+    // Demo payment: no money moves and no payment details are accepted. It
+    // only moves the caller's own order from pending_payment to paid; the
+    // amount was fixed from DB prices when the order was created.
+    typedApp.route({
+        method: "POST",
+        url: "/orders/:id/pay",
+        preValidation: [authenticate, requireCsrf],
+        schema: { params: orderIdParamsSchema, response: { 200: orderResponseSchema } },
+        handler: async (request) => {
+            const order = await payOrder(request.user!.id, request.params.id);
+            if (!order) throw Errors.notFound("Order not found");
+            return order;
         },
     });
 

@@ -1,21 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { randomUUID } from "node:crypto";
 import { eq } from "drizzle-orm";
+import { buildApp } from "../../app.js";
 import { authHeaders } from "../../test/helpers.js";
 import { db } from "../../db/index.js";
 import { products, orders } from "../../db/schema.js";
-
-const createCheckoutSession = vi.fn();
-const verifyWebhookSignature = vi.fn();
-
-vi.mock("../../lib/stripe.js", () => ({
-    createCheckoutSession: (...args: unknown[]) => createCheckoutSession(...args),
-    verifyWebhookSignature: (...args: unknown[]) => verifyWebhookSignature(...args),
-}));
-
-// Imported AFTER the mock is registered, so buildApp's route registration
-// picks up the mocked module.
-const { buildApp } = await import("../../app.js");
 
 const VALID_ADDRESS = {
     fullName: "Ada Lovelace",
@@ -25,12 +14,6 @@ const VALID_ADDRESS = {
     postalCode: "NW1 6XE",
     country: "United Kingdom",
 };
-
-beforeEach(() => {
-    createCheckoutSession.mockReset();
-    createCheckoutSession.mockResolvedValue({ id: `cs_test_${randomUUID()}`, clientSecret: "cs_secret_test" });
-    verifyWebhookSignature.mockReset();
-});
 
 async function registerAndGetApp() {
     const app = await buildApp();
@@ -141,6 +124,24 @@ describe("POST /orders", () => {
         expect(res.statusCode).toBe(201);
     });
 
+    it("409s listing every inactive product in the cart, and creates no order", async () => {
+        const { app, session } = await registerAndGetApp();
+        const active = await seedProduct({ title: "Still Sold" });
+        const retired = await seedProduct({ title: "Retired Item" });
+        await addToCart(app, session, active.id, 1);
+        await addToCart(app, session, retired.id, 1);
+        await db.update(products).set({ isActive: false }).where(eq(products.id, retired.id));
+
+        const res = await createOrder(app, session);
+
+        expect(res.statusCode).toBe(409);
+        expect(JSON.parse(res.body).error).toMatchObject({
+            code: "PRODUCTS_UNAVAILABLE",
+            details: { products: [{ productId: retired.id, title: "Retired Item" }] },
+        });
+        expect(await db.select().from(orders)).toHaveLength(0);
+    });
+
     it("400s when the cart is empty", async () => {
         const { app, session } = await registerAndGetApp();
 
@@ -149,7 +150,7 @@ describe("POST /orders", () => {
         expect(res.statusCode).toBe(400);
     });
 
-    it("creates an order from the live cart and returns a Stripe client secret", async () => {
+    it("creates a pending order from the live cart, totalled from DB prices", async () => {
         const { app, session } = await registerAndGetApp();
         const product = await seedProduct({ priceCents: 2500 });
         await addToCart(app, session, product.id, 3);
@@ -158,12 +159,9 @@ describe("POST /orders", () => {
 
         expect(res.statusCode).toBe(201);
         const body = JSON.parse(res.body);
-        expect(body.orderId).toBeDefined();
-        expect(body.clientSecret).toBe("cs_secret_test");
-        expect(createCheckoutSession).toHaveBeenCalledTimes(1);
-        expect(createCheckoutSession).toHaveBeenCalledWith(
-            expect.objectContaining({ subtotalCents: 7500 }) // 2500 * 3
-        );
+        expect(Object.keys(body)).toEqual(["orderId"]);
+        const [row] = await db.select().from(orders).where(eq(orders.id, body.orderId));
+        expect(row).toMatchObject({ status: "pending_payment", subtotalCents: 7500 }); // 2500 * 3
     });
 
     it("never trusts a client-supplied amount -- the order total always comes from live product prices", async () => {
@@ -171,17 +169,18 @@ describe("POST /orders", () => {
         const product = await seedProduct({ priceCents: 999 });
         await addToCart(app, session, product.id, 1);
 
-        await app.inject({
+        const res = await app.inject({
             method: "POST",
             url: "/orders",
             headers: authHeaders(session, { "idempotency-key": randomUUID() }),
             payload: { shippingAddress: VALID_ADDRESS, subtotalCents: 1 }, // ignored even if sent
         });
 
-        expect(createCheckoutSession).toHaveBeenCalledWith(expect.objectContaining({ subtotalCents: 999 }));
+        const [row] = await db.select().from(orders).where(eq(orders.id, JSON.parse(res.body).orderId));
+        expect(row!.subtotalCents).toBe(999);
     });
 
-    it("regression: a double-submitted request with the same Idempotency-Key creates exactly one order and one Stripe session", async () => {
+    it("regression: a double-submitted request with the same Idempotency-Key creates exactly one order", async () => {
         const { app, session } = await registerAndGetApp();
         const product = await seedProduct();
         await addToCart(app, session, product.id, 1);
@@ -197,11 +196,10 @@ describe("POST /orders", () => {
         // winner already committed and sees 'succeeded' (a replay of the
         // same 201) -- both are correct outcomes of the same mechanism, so
         // the real invariant isn't which status pairing occurs, it's that
-        // Stripe and the DB only ever recorded ONE order between them.
+        // the DB only ever recorded ONE order between them.
         for (const res of [first, second]) {
             expect([201, 409]).toContain(res.statusCode);
         }
-        expect(createCheckoutSession).toHaveBeenCalledTimes(1);
 
         const successResponses = [first, second].filter((r) => r.statusCode === 201).map((r) => JSON.parse(r.body));
         const orderIds = new Set(successResponses.map((b) => b.orderId));
@@ -222,7 +220,8 @@ describe("POST /orders", () => {
 
         expect(second.statusCode).toBe(201);
         expect(JSON.parse(second.body)).toEqual(JSON.parse(first.body));
-        expect(createCheckoutSession).toHaveBeenCalledTimes(1);
+        const userOrders = await db.select().from(orders).where(eq(orders.id, JSON.parse(first.body).orderId));
+        expect(userOrders).toHaveLength(1);
     });
 
     it("422s when the same Idempotency-Key is reused with a different shipping address", async () => {
@@ -289,80 +288,118 @@ describe("GET /orders/:id", () => {
     });
 });
 
-describe("POST /webhooks/stripe", () => {
-    it("marks the order paid and clears the paid items from the cart", async () => {
+describe("POST /orders/:id/pay", () => {
+    async function placeOrder(app: Awaited<ReturnType<typeof buildApp>>, session: Awaited<ReturnType<typeof app.inject>>, productId: string) {
+        await addToCart(app, session, productId, 1);
+        const res = await createOrder(app, session);
+        return JSON.parse(res.body).orderId as string;
+    }
+
+    function pay(app: Awaited<ReturnType<typeof buildApp>>, orderId: string, headers: Record<string, string>) {
+        return app.inject({ method: "POST", url: `/orders/${orderId}/pay`, headers });
+    }
+
+    it("marks the caller's own pending order paid and removes only its items from the cart", async () => {
         const { app, session } = await registerAndGetApp();
         const paidProduct = await seedProduct({ title: "Paid Item" });
         const otherProduct = await seedProduct({ title: "Untouched Item" });
-        await addToCart(app, session, paidProduct.id, 1);
-        const createRes = await createOrder(app, session);
-        const { orderId } = JSON.parse(createRes.body);
-        const [orderRow] = await db.select().from(orders).where(eq(orders.id, orderId));
-        // Simulate the shopper adding something new while payment was
-        // pending -- the webhook must not touch it.
+        const orderId = await placeOrder(app, session, paidProduct.id);
+        // Added while the order was pending -- not part of it, must survive.
         await addToCart(app, session, otherProduct.id, 1);
 
-        verifyWebhookSignature.mockReturnValue({ type: "checkout.session.completed", sessionId: orderRow!.stripeSessionId });
+        const res = await pay(app, orderId, authHeaders(session));
 
-        const webhookRes = await app.inject({
-            method: "POST",
-            url: "/webhooks/stripe",
-            headers: { "stripe-signature": "t=1,v1=fake" },
-            payload: { id: "evt_test" },
-        });
-
-        expect(webhookRes.statusCode).toBe(200);
-        const orderCheck = await app.inject({
-            method: "GET",
-            url: `/orders/${orderId}`,
-            headers: { cookie: authHeaders(session).cookie },
-        });
-        expect(JSON.parse(orderCheck.body).status).toBe("paid");
-
+        expect(res.statusCode).toBe(200);
+        expect(JSON.parse(res.body)).toMatchObject({ id: orderId, status: "paid", subtotal: 10 });
         const cartRes = await app.inject({ method: "GET", url: "/cart", headers: authHeaders(session) });
-        const cart = JSON.parse(cartRes.body);
-        expect(cart.items.map((i: { title: string }) => i.title)).toEqual(["Untouched Item"]);
+        expect(JSON.parse(cartRes.body).items.map((i: { title: string }) => i.title)).toEqual(["Untouched Item"]);
     });
 
-    it("is a no-op for an already-paid order -- redelivered webhooks don't error", async () => {
+    it("404s for another user's order and leaves it unpaid", async () => {
+        const { app, session: ownerSession } = await registerAndGetApp();
+        const product = await seedProduct();
+        const orderId = await placeOrder(app, ownerSession, product.id);
+        const otherSession = await app.inject({
+            method: "POST",
+            url: "/auth/register",
+            payload: { email: `${randomUUID()}@test.com`, password: "password123" },
+        });
+
+        const res = await pay(app, orderId, authHeaders(otherSession));
+
+        expect(res.statusCode).toBe(404);
+        const [row] = await db.select().from(orders).where(eq(orders.id, orderId));
+        expect(row!.status).toBe("pending_payment");
+    });
+
+    it("404s for an order id that doesn't exist", async () => {
+        const { app, session } = await registerAndGetApp();
+
+        const res = await pay(app, randomUUID(), authHeaders(session));
+
+        expect(res.statusCode).toBe(404);
+    });
+
+    it("returns 200 with no change for an already-paid order", async () => {
         const { app, session } = await registerAndGetApp();
         const product = await seedProduct();
-        await addToCart(app, session, product.id, 1);
-        const createRes = await createOrder(app, session);
-        const { orderId } = JSON.parse(createRes.body);
-        const [orderRow] = await db.select().from(orders).where(eq(orders.id, orderId));
-        verifyWebhookSignature.mockReturnValue({ type: "checkout.session.completed", sessionId: orderRow!.stripeSessionId });
+        const orderId = await placeOrder(app, session, product.id);
+        const first = await pay(app, orderId, authHeaders(session));
+        const [afterFirst] = await db.select().from(orders).where(eq(orders.id, orderId));
 
-        const first = await app.inject({
-            method: "POST",
-            url: "/webhooks/stripe",
-            headers: { "stripe-signature": "t=1,v1=fake" },
-            payload: { id: "evt_test" },
-        });
-        const second = await app.inject({
-            method: "POST",
-            url: "/webhooks/stripe",
-            headers: { "stripe-signature": "t=1,v1=fake" },
-            payload: { id: "evt_test" },
-        });
+        const second = await pay(app, orderId, authHeaders(session));
 
-        expect(first.statusCode).toBe(200);
         expect(second.statusCode).toBe(200);
+        expect(JSON.parse(second.body)).toEqual(JSON.parse(first.body));
+        const [afterSecond] = await db.select().from(orders).where(eq(orders.id, orderId));
+        expect(afterSecond!.updatedAt).toEqual(afterFirst!.updatedAt);
     });
 
-    it("rejects a request with an invalid signature", async () => {
+    it("409s for an order that is no longer payable", async () => {
+        const { app, session } = await registerAndGetApp();
+        const product = await seedProduct();
+        const orderId = await placeOrder(app, session, product.id);
+        await db.update(orders).set({ status: "cancelled" }).where(eq(orders.id, orderId));
+
+        const res = await pay(app, orderId, authHeaders(session));
+
+        expect(res.statusCode).toBe(409);
+    });
+
+    it("403s without a CSRF token", async () => {
+        const { app, session } = await registerAndGetApp();
+        const product = await seedProduct();
+        const orderId = await placeOrder(app, session, product.id);
+        const { "x-csrf-token": _omitted, ...headers } = authHeaders(session);
+
+        const res = await pay(app, orderId, headers);
+
+        expect(res.statusCode).toBe(403);
+        const [row] = await db.select().from(orders).where(eq(orders.id, orderId));
+        expect(row!.status).toBe("pending_payment");
+    });
+
+    it("401s when unauthenticated", async () => {
         const app = await buildApp();
-        verifyWebhookSignature.mockImplementation(() => {
-            throw new Error("bad signature");
-        });
+
+        const res = await pay(app, randomUUID(), { origin: "http://localhost:5173" });
+
+        expect(res.statusCode).toBe(401);
+    });
+
+    it("ignores any amount in the request body", async () => {
+        const { app, session } = await registerAndGetApp();
+        const product = await seedProduct({ priceCents: 4321 });
+        const orderId = await placeOrder(app, session, product.id);
 
         const res = await app.inject({
             method: "POST",
-            url: "/webhooks/stripe",
-            headers: { "stripe-signature": "garbage" },
-            payload: { id: "evt_test" },
+            url: `/orders/${orderId}/pay`,
+            headers: authHeaders(session),
+            payload: { subtotal: 0.01, amount: 1 },
         });
 
-        expect(res.statusCode).toBe(500); // thrown Error, not an ApiError -- caught by the generic handler
+        expect(res.statusCode).toBe(200);
+        expect(JSON.parse(res.body).subtotal).toBe(43.21);
     });
 });

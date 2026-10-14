@@ -4,6 +4,8 @@ import { z } from "zod";
 // it when it's left unset -- an optional value should treat that the same
 // as genuinely absent, not fail min(1) validation at boot.
 const optionalString = () => z.preprocess((v) => (v === "" ? undefined : v), z.string().min(1).optional());
+const positiveIntWithDefault = (fallback: number) =>
+    z.preprocess((v) => (v === "" ? undefined : v), z.coerce.number().int().positive().default(fallback));
 
 // Validated once at boot. A misconfigured deployment should fail loudly at
 // startup, not fail confusingly on the first request that touches the
@@ -39,9 +41,14 @@ const envSchema = z.object({
     // bucket. Too high: clients can spoof their own address. Set from what
     // the "login client address" log line shows -- see README.
     TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(1),
-    STRIPE_SECRET_KEY: z.string().min(1),
-    STRIPE_WEBHOOK_SECRET: z.string().min(1),
     FRONTEND_URL: z.string().min(1),
+    // Auth rate limits (attempts per 15 minutes). The defaults ARE the
+    // production values; only the e2e suite raises them, because all its
+    // traffic comes from one IP. Deliberately no "disable" setting: the
+    // lowest-risk misconfiguration is a limit that's too high, not none.
+    AUTH_RATE_LIMIT_MAX: positiveIntWithDefault(10), // login + register, per IP
+    LOGIN_EMAIL_RATE_LIMIT_MAX: positiveIntWithDefault(20), // login, per email
+    REFRESH_RATE_LIMIT_MAX: positiveIntWithDefault(10), // refresh, per token
     // Optional: absent means catalog caching is a no-op and rate limiting
     // falls back to its in-memory store -- fine for local dev without
     // Docker, wrong once more than one instance is running. See lib/redis.ts.
@@ -78,9 +85,9 @@ const frontendOrigin = parseOrigin(parsed.data.FRONTEND_URL, "FRONTEND_URL");
 
 // @fastify/cors (app.ts) and the CSRF Origin check (auth-plugin.ts) both
 // read corsOrigins as their allowlist -- one source of truth, so the two
-// checks can't drift apart from each other. FRONTEND_URL is also used
-// separately to build the Stripe checkout returnUrl (orders/routes.ts), so
-// it isn't silently folded into corsOrigins here: doing that would let
+// checks can't drift apart from each other. FRONTEND_URL (the canonical
+// frontend origin; nothing else reads it since the Stripe returnUrl was
+// removed) isn't silently folded into corsOrigins here: doing that would let
 // FRONTEND_URL silently *widen* what CORS trusts whenever it didn't
 // already agree with CORS_ORIGIN, changing the CORS trust boundary based
 // on which env var an operator happened to remember to update. Failing

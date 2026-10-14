@@ -56,9 +56,8 @@ services:
       # http://localhost:5173 is the Vite dev server (`npm run dev` in
       # client/) for local dev against this same backend -- CORS_ORIGIN
       # takes a comma-separated list, so both are allowed. FRONTEND_URL
-      # stays a single canonical value (used for the Stripe checkout
-      # returnUrl) and must be one of the CORS_ORIGIN entries -- config.ts
-      # fails loudly at boot if it isn't.
+      # stays a single canonical value and must be one of the CORS_ORIGIN
+      # entries -- config.ts fails loudly at boot if it isn't.
       CORS_ORIGIN: http://localhost:8080,http://localhost:5173
       FRONTEND_URL: http://localhost:8080
       COOKIE_SAME_SITE: lax
@@ -69,8 +68,6 @@ services:
       # discards them, breaking every authenticated request right after
       # login. See config.ts's COOKIE_SECURE.
       COOKIE_SECURE: "false"
-      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_replace_me}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_replace_me}
       SENTRY_DSN: ${SENTRY_DSN:-}
     depends_on:
       postgres:
@@ -85,7 +82,6 @@ services:
       context: .
       args:
         VITE_API_URL: http://localhost:3001
-        VITE_STRIPE_PUBLISHABLE_KEY: ${VITE_STRIPE_PUBLISHABLE_KEY:-pk_test_replace_me}
     restart: unless-stopped
     ports:
       - "8080:80"

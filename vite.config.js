@@ -3,9 +3,23 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
+// Same shape as production's vercel.json rewrite: the SPA calls /api/*
+// on its own origin and the prefix is stripped on the way to the backend,
+// so auth cookies are first-party here too. Used when VITE_API_URL=/api
+// (the e2e suite); a direct VITE_API_URL like http://localhost:3001 never
+// touches it.
+const apiProxy = {
+  '/api': {
+    target: process.env.API_PROXY_TARGET ?? 'http://localhost:3001',
+    rewrite: (p) => p.replace(/^\/api/, ''),
+  },
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  server: { proxy: apiProxy },
+  preview: { proxy: apiProxy },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

@@ -5,11 +5,10 @@ import { idempotencyKeys } from "../db/schema.js";
 
 export const IDEMPOTENCY_KEY_HEADER = "idempotency-key";
 const IDEMPOTENCY_KEY_PATTERN = /^[A-Za-z0-9-]{1,128}$/;
-const RETENTION_DAYS = 7; // outlives Stripe's ~3-day webhook redelivery window with margin
+const RETENTION_DAYS = 7; // far longer than any client retry of the same attempt
 
 // No operation behind this mechanism should ever run longer than this
-// (routes calling out to Stripe pass an explicit request timeout well under
-// this). A row still 'in_progress' past this age means the process that
+// (every one is a local DB transaction). A row still 'in_progress' past this age means the process that
 // claimed it crashed before recording an outcome -- reclaim it lazily, on
 // the next actual retry, rather than running a separate sweep job for
 // something that only matters exactly when a client retries anyway.

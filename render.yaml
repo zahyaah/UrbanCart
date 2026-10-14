@@ -48,10 +48,6 @@ services:
       # during Blueprint creation rather than storing them in this file.
       - key: JWT_ACCESS_SECRET
         sync: false
-      - key: STRIPE_SECRET_KEY
-        sync: false
-      - key: STRIPE_WEBHOOK_SECRET
-        sync: false
       - key: SENTRY_DSN
         sync: false
       # Wherever the frontend ends up deployed -- see README.md.

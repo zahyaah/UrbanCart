@@ -17,10 +17,6 @@ export const addToCartSchema = z.object({
     quantity: z.number().int().positive().default(1),
 });
 
-export const setQuantitySchema = z.object({
-    quantity: z.number().int().nonnegative(),
-});
-
 export const productIdParamsSchema = z.object({
     productId: z.uuid(),
 });

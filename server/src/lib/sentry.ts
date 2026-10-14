@@ -2,8 +2,7 @@ import * as Sentry from "@sentry/node";
 import { config } from "../config.js";
 
 // A no-op SDK (Sentry.init() never called) when SENTRY_DSN is unset -- every
-// Sentry.* call becomes a harmless no-op, same pattern as the frontend's
-// pk_test_replace_me placeholder for Stripe. Import this before anything
+// Sentry.* call becomes a harmless no-op. Import this before anything
 // else boots (see server.ts) so the SDK is ready before the first request.
 if (config.SENTRY_DSN) {
     Sentry.init({

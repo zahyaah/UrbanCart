@@ -9,21 +9,18 @@ interface OrderSummaryProps {
     mode?: "cart" | "checkout";
     ctaLabel?: string;
     onCtaClick?: () => void;
-    /** false on the Payment step: Stripe's own form has the submit button
-     * there, so a second "PLACE ORDER" button would be redundant. */
-    showCta?: boolean;
 }
 
-function OrderSummary({ mode = "cart", ctaLabel, onCtaClick, showCta = true }: OrderSummaryProps) {
+function OrderSummary({ mode = "cart", ctaLabel, onCtaClick }: OrderSummaryProps) {
     const navigate = useNavigate();
     const { items } = useCart();
     const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
     // No discount logic here on purpose -- this used to show a decorative
     // "$5 + 5% off" that never corresponded to anything real. Now that
-    // checkout charges a real Stripe amount computed server-side from the
-    // same live prices (see server's snapshotCartForOrder), showing a
+    // the order total is computed server-side from the same live prices
+    // (see server's snapshotCartForOrder), showing a
     // different, lower number here would mean the total on screen doesn't
-    // match what the shopper is actually charged. Total Amount is exactly
+    // match the order the shopper actually places. Total Amount is exactly
     // the subtotal until a real discount exists on both sides.
     const subtotal = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
@@ -62,7 +59,7 @@ function OrderSummary({ mode = "cart", ctaLabel, onCtaClick, showCta = true }: O
                 <span className="text-sm font-semibold">Total Amount</span>
                 <span className="font-sans text-xl font-bold tabular-nums">${subtotal.toFixed(2)}</span>
             </div>
-            {showCta && itemCount > 0 && (
+            {itemCount > 0 && (
                 <Button
                     size="lg"
                     className="mt-6 min-h-[44px] w-full justify-between pl-6 tracking-wide"

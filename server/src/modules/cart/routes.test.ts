@@ -155,48 +155,6 @@ describe("POST /cart/items", () => {
     });
 });
 
-describe("PATCH /cart/items/:productId", () => {
-    it("sets the exact quantity", async () => {
-        const { app, session } = await registerAndGetApp();
-        const product = await seedProduct();
-        await app.inject({
-            method: "POST",
-            url: "/cart/items",
-            headers: authHeaders(session),
-            payload: { productId: product.id, quantity: 3 },
-        });
-
-        const res = await app.inject({
-            method: "PATCH",
-            url: `/cart/items/${product.id}`,
-            headers: authHeaders(session),
-            payload: { quantity: 7 },
-        });
-
-        expect(JSON.parse(res.body).items[0].quantity).toBe(7);
-    });
-
-    it("removes the line item when quantity is set to 0", async () => {
-        const { app, session } = await registerAndGetApp();
-        const product = await seedProduct();
-        await app.inject({
-            method: "POST",
-            url: "/cart/items",
-            headers: authHeaders(session),
-            payload: { productId: product.id, quantity: 3 },
-        });
-
-        const res = await app.inject({
-            method: "PATCH",
-            url: `/cart/items/${product.id}`,
-            headers: authHeaders(session),
-            payload: { quantity: 0 },
-        });
-
-        expect(JSON.parse(res.body).items).toEqual([]);
-    });
-});
-
 describe("POST /cart/items/:productId/decrement", () => {
     async function addItem(app: Awaited<ReturnType<typeof buildApp>>, session: Parameters<typeof authHeaders>[0], productId: string, quantity: number) {
         await app.inject({ method: "POST", url: "/cart/items", headers: authHeaders(session), payload: { productId, quantity } });

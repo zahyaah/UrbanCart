@@ -73,28 +73,6 @@ export async function addToCart(userId: string, productId: string, quantity: num
     return loadCart(userId);
 }
 
-export async function setCartItemQuantity(userId: string, productId: string, quantity: number): Promise<CartItemView[]> {
-    if (quantity === 0) {
-        return removeFromCart(userId, productId);
-    }
-
-    const product = await db.query.products.findFirst({
-        where: and(eq(products.id, productId), eq(products.isActive, true)),
-    });
-    if (!product) throw Errors.notFound("Product not found");
-
-    const cappedQuantity = Math.min(quantity, MAX_LINE_ITEM_QTY);
-    await db
-        .insert(cartItems)
-        .values({ userId, productId, quantity: cappedQuantity })
-        .onConflictDoUpdate({
-            target: [cartItems.userId, cartItems.productId],
-            set: { quantity: cappedQuantity, updatedAt: sql`now()` },
-        });
-
-    return loadCart(userId);
-}
-
 /** One-step decrement, applied to the row's current quantity on the server
  * rather than a quantity the client computed from its (possibly stale)
  * cached cart -- two quick clicks are two decrements, not one overwritten

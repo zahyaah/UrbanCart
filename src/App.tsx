@@ -4,14 +4,14 @@ import Layout from "./components/Layout/Layout"
 import { createBrowserRouter, RouterProvider } from "react-router-dom"
 
 // Products (the landing route) and Layout load eagerly -- first paint must
-// not be gated on a lazy chunk. Everything else, especially Checkout (which
-// pulls in the ~130 KB Stripe Elements SDK), only needs to load once a
+// not be gated on a lazy chunk. Everything else only needs to load once a
 // shopper actually navigates there.
 const Product = lazy(() => import("./components/Product/Product"))
 const ErrorPage = lazy(() => import("./components/ErrorPage/ErrorPage"))
 const Cart = lazy(() => import("./components/Cart/Cart"))
 const Checkout = lazy(() => import("./components/Checkout/Checkout"))
 const ConfirmationPage = lazy(() => import("./components/Checkout/ConfirmationPage"))
+const PayPage = lazy(() => import("./components/Checkout/PayPage"))
 const LoginPage = lazy(() => import("./components/Auth/LoginPage"))
 const RegisterPage = lazy(() => import("./components/Auth/RegisterPage"))
 
@@ -31,6 +31,7 @@ function App() {
           { path: "/cart", element: withSuspense(<Cart />) },
           { path: "/checkout", element: withSuspense(<Checkout />) },
           { path: "/checkout/confirmation", element: withSuspense(<ConfirmationPage />) },
+          { path: "/checkout/:orderId", element: withSuspense(<PayPage />) },
           { path: "/login", element: withSuspense(<LoginPage />) },
           { path: "/register", element: withSuspense(<RegisterPage />) },
           { path: "*", element: withSuspense(<ErrorPage />) }
