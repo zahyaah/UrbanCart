@@ -122,7 +122,7 @@ jobs:
 
   # Currently red, tracked rather than hidden: the suite predates Phase C's
   # backend rewrite (expects a 4-step wizard with a removed "Review" step,
-  # mock card validation replaced by real Stripe Elements, no auth gate on
+  # mock card validation since removed, no auth gate on
   # checkout). See README.md's Testing section. continue-on-error keeps this
   # visible without blocking every unrelated PR on a known, pre-existing gap
   # -- same pattern as the audit job below.

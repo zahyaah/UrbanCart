@@ -87,15 +87,15 @@ export default function () {
             },
         }
     );
-    // Requires a live Stripe test-mode key to succeed end-to-end (201) --
-    // a placeholder key (see .env.example) gets a 401 straight from Stripe's
-    // API ("Invalid API Key provided"), propagated as-is. Both outcomes are
-    // checked and reported separately so a placeholder-key run doesn't
-    // masquerade as a passing order-creation flow.
-    check(orderRes, {
-        "order creation reachable (201, or 401 from a placeholder Stripe key)": (r) =>
-            r.status === 201 || r.status === 401,
+    check(orderRes, { "order creation is 201": (r) => r.status === 201 });
+    if (orderRes.status !== 201) return;
+
+    // Demo payment: no body, no payment details -- the server fixed the
+    // amount from DB prices when the order was created.
+    const payRes = http.post(`${BASE_URL}/orders/${JSON.parse(orderRes.body).orderId}/pay`, null, {
+        headers: authedHeaders,
     });
+    check(payRes, { "demo pay is 200 and paid": (r) => r.status === 200 && JSON.parse(r.body).status === "paid" });
 
     sleep(1);
 }
