@@ -95,6 +95,32 @@ export async function setCartItemQuantity(userId: string, productId: string, qua
     return loadCart(userId);
 }
 
+/** One-step decrement, applied to the row's current quantity on the server
+ * rather than a quantity the client computed from its (possibly stale)
+ * cached cart -- two quick clicks are two decrements, not one overwritten
+ * by the other. Increment needs no counterpart: addToCart already adds
+ * atomically. The row is locked so a concurrent decrement can't drive it
+ * through the quantity > 0 CHECK; reaching 0 removes the line. */
+export async function decrementCartItem(userId: string, productId: string): Promise<CartItemView[]> {
+    const lineFilter = and(eq(cartItems.userId, userId), eq(cartItems.productId, productId));
+
+    await db.transaction(async (tx) => {
+        const [row] = await tx.select({ quantity: cartItems.quantity }).from(cartItems).where(lineFilter).for("update");
+        if (!row) return;
+
+        if (row.quantity <= 1) {
+            await tx.delete(cartItems).where(lineFilter);
+        } else {
+            await tx
+                .update(cartItems)
+                .set({ quantity: sql`${cartItems.quantity} - 1`, updatedAt: sql`now()` })
+                .where(lineFilter);
+        }
+    });
+
+    return loadCart(userId);
+}
+
 export async function removeFromCart(userId: string, productId: string): Promise<CartItemView[]> {
     await db.delete(cartItems).where(and(eq(cartItems.userId, userId), eq(cartItems.productId, productId)));
     return loadCart(userId);

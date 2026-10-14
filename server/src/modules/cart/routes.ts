@@ -1,7 +1,15 @@
 import type { FastifyInstance } from "fastify";
 import type { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
-import { getCart, addToCart, setCartItemQuantity, removeFromCart, clearCart, applyCartMerge } from "./service.js";
+import {
+    getCart,
+    addToCart,
+    setCartItemQuantity,
+    decrementCartItem,
+    removeFromCart,
+    clearCart,
+    applyCartMerge,
+} from "./service.js";
 import { db } from "../../db/index.js";
 import { runWithSerializationRetry } from "../../lib/db-retry.js";
 import {
@@ -57,6 +65,16 @@ export async function cartRoutes(app: FastifyInstance) {
         handler: async (request) => {
             const { productId } = request.params;
             return { items: await setCartItemQuantity(request.user!.id, productId, request.body.quantity) };
+        },
+    });
+
+    typedApp.route({
+        method: "POST",
+        url: "/cart/items/:productId/decrement",
+        preValidation: [authenticate, requireCsrf],
+        schema: { params: productIdParamsSchema, response: { 200: cartResponseSchema } },
+        handler: async (request) => {
+            return { items: await decrementCartItem(request.user!.id, request.params.productId) };
         },
     });
 

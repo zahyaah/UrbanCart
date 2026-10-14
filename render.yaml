@@ -59,5 +59,16 @@ services:
         sync: false
       - key: FRONTEND_URL
         sync: false
+      # The frontend calls this API through its own host's /api rewrite
+      # (vercel.json), so auth cookies are first-party: SameSite=Lax works,
+      # and nothing depends on third-party cookies, which Safari/Brave/
+      # incognito block. The browser sees /api/auth/..., hence the prefix.
       - key: COOKIE_SAME_SITE
-        value: none # frontend and backend are on different Render/host domains
+        value: lax
+      - key: COOKIE_PATH_PREFIX
+        value: /api
+      # Proxies to trust when resolving the client IP (the rate-limit key).
+      # NOT yet verified for the Vercel -> Render chain -- set it from the
+      # "login client address" log line; see README's Deployment section.
+      - key: TRUST_PROXY_HOPS
+        value: 1

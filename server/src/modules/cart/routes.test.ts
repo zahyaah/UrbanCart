@@ -197,6 +197,57 @@ describe("PATCH /cart/items/:productId", () => {
     });
 });
 
+describe("POST /cart/items/:productId/decrement", () => {
+    async function addItem(app: Awaited<ReturnType<typeof buildApp>>, session: Parameters<typeof authHeaders>[0], productId: string, quantity: number) {
+        await app.inject({ method: "POST", url: "/cart/items", headers: authHeaders(session), payload: { productId, quantity } });
+    }
+
+    it("decrements against the server-side quantity, so concurrent clicks both count", async () => {
+        const { app, session } = await registerAndGetApp();
+        const product = await seedProduct();
+        await addItem(app, session, product.id, 3);
+
+        await Promise.all([
+            app.inject({ method: "POST", url: `/cart/items/${product.id}/decrement`, headers: authHeaders(session) }),
+            app.inject({ method: "POST", url: `/cart/items/${product.id}/decrement`, headers: authHeaders(session) }),
+        ]);
+
+        const res = await app.inject({ method: "GET", url: "/cart", headers: authHeaders(session) });
+        expect(JSON.parse(res.body).items[0].quantity).toBe(1);
+    });
+
+    it("removes the line when it reaches zero", async () => {
+        const { app, session } = await registerAndGetApp();
+        const product = await seedProduct();
+        await addItem(app, session, product.id, 1);
+
+        const res = await app.inject({ method: "POST", url: `/cart/items/${product.id}/decrement`, headers: authHeaders(session) });
+
+        expect(res.statusCode).toBe(200);
+        expect(JSON.parse(res.body)).toEqual({ items: [] });
+    });
+
+    it("is a no-op for a product not in the cart", async () => {
+        const { app, session } = await registerAndGetApp();
+        const product = await seedProduct();
+
+        const res = await app.inject({ method: "POST", url: `/cart/items/${product.id}/decrement`, headers: authHeaders(session) });
+
+        expect(res.statusCode).toBe(200);
+        expect(JSON.parse(res.body)).toEqual({ items: [] });
+    });
+
+    it("requires a CSRF token", async () => {
+        const { app, session } = await registerAndGetApp();
+        const product = await seedProduct();
+        const { "x-csrf-token": _omitted, ...headers } = authHeaders(session);
+
+        const res = await app.inject({ method: "POST", url: `/cart/items/${product.id}/decrement`, headers });
+
+        expect(res.statusCode).toBe(403);
+    });
+});
+
 describe("DELETE /cart/items/:productId", () => {
     it("removes the line item regardless of quantity", async () => {
         const { app, session } = await registerAndGetApp();

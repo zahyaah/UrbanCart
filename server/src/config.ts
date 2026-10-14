@@ -23,6 +23,22 @@ const envSchema = z.object({
     // plain HTTP on localhost) needs Secure turned off, or the browser
     // silently discards every auth cookie the server sets.
     COOKIE_SECURE: z.enum(["true", "false"]).optional(),
+    // The path prefix the BROWSER sees in front of this API's routes. Empty
+    // when the frontend calls the backend directly; "/api" when it calls
+    // through the frontend host's same-origin rewrite (vercel.json), where
+    // the browser requests /api/auth/refresh, not /auth/refresh. Cookie
+    // paths are matched against the browser-visible URL, so a refresh_token
+    // scoped to "/auth" would never be sent through the proxy.
+    COOKIE_PATH_PREFIX: z
+        .string()
+        .regex(/^(\/[A-Za-z0-9_-]+)*$/, "COOKIE_PATH_PREFIX must be empty or like /api (no trailing slash)")
+        .default(""),
+    // How many proxies in front of this service to trust when resolving
+    // req.ip (the rate-limit key) from X-Forwarded-For. Production only.
+    // Too low: req.ip is a proxy's address and every user shares one login
+    // bucket. Too high: clients can spoof their own address. Set from what
+    // the "login client address" log line shows -- see README.
+    TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(1),
     STRIPE_SECRET_KEY: z.string().min(1),
     STRIPE_WEBHOOK_SECRET: z.string().min(1),
     FRONTEND_URL: z.string().min(1),

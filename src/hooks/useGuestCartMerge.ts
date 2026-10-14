@@ -2,7 +2,7 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "../redux/hooks";
 import { selectCartItems } from "../features/cart/cartSelectors";
-import { clearCart } from "../features/cart/cartSlice";
+import { removeMergedItems } from "../features/cart/cartSlice";
 import { useMergeGuestCartMutation } from "../features/cart/cartApi";
 
 /** Fires once, immediately after a successful login/register -- merges
@@ -16,14 +16,15 @@ export function useGuestCartMerge() {
 
     const mergeAndClearLocalCart = useCallback(async () => {
         if (localItems.length === 0) return;
+        const sentItems = localItems;
 
         try {
             const result = await mergeGuestCart({
-                items: localItems.map((item) => ({ productId: String(item.id), quantity: item.quantity })),
+                items: sentItems.map((item) => ({ productId: String(item.id), quantity: item.quantity })),
                 idempotencyKey: crypto.randomUUID(),
             }).unwrap();
 
-            dispatch(clearCart());
+            dispatch(removeMergedItems(sentItems));
 
             if (result.adjustments.length > 0) {
                 toast.info(
@@ -32,9 +33,9 @@ export function useGuestCartMerge() {
             }
         } catch {
             // A failed merge leaves the local guest cart intact -- nothing
-            // is lost, the user can retry (e.g. by logging out and back in)
-            // or keep shopping as a guest.
-            toast.error("Couldn't merge your cart. Your items are still saved locally.");
+            // is lost, and UnmergedCartNotice offers a Retry on the cart
+            // page and in the cart drawer.
+            toast.error("Couldn't move your saved items into your cart. Open your cart to retry.");
         }
     }, [localItems, mergeGuestCart, dispatch]);
 

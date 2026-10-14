@@ -6,10 +6,12 @@ on:
   push:
     branches: [main]
 
-# A new push to the same branch supersedes the run already in flight.
+# A new push to a PR branch supersedes the run already in flight. Never on
+# main: every main commit is what Render deploys, so each one keeps its own
+# verdict (a cancelled run once hid a tsc failure that broke a deploy).
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
   NODE_VERSION: '22'

@@ -9,6 +9,10 @@ const baseCookieOptions = {
     path: "/",
 } as const;
 
+// See config.ts's COOKIE_PATH_PREFIX: must match the browser-visible path of
+// /auth/refresh and /auth/logout, or the browser never sends the cookie.
+const REFRESH_COOKIE_PATH = `${config.COOKIE_PATH_PREFIX}/auth`;
+
 export function setAuthCookies(
     reply: FastifyReply,
     { accessToken, refreshToken, csrfToken }: { accessToken: string; refreshToken: string; csrfToken: string }
@@ -21,7 +25,7 @@ export function setAuthCookies(
         ...baseCookieOptions,
         // Scoped to /auth only -- the refresh token never needs to leave the
         // browser on every ordinary API call, just the refresh/logout ones.
-        path: "/auth",
+        path: REFRESH_COOKIE_PATH,
         maxAge: REFRESH_TOKEN_TTL_DAYS * 24 * 60 * 60,
     });
     // Deliberately NOT httpOnly -- the frontend must read this value to echo
@@ -34,8 +38,12 @@ export function setAuthCookies(
     });
 }
 
+// Same attributes the cookies were set with (minus maxAge). A clearing
+// Set-Cookie with mismatched attributes can be dropped by the browser -- e.g.
+// one defaulting to SameSite=Lax is ignored on a cross-site response, which
+// left every auth cookie in place after a "successful" logout.
 export function clearAuthCookies(reply: FastifyReply) {
-    reply.clearCookie("access_token", { path: "/" });
-    reply.clearCookie("refresh_token", { path: "/auth" });
-    reply.clearCookie("csrf_token", { path: "/" });
+    reply.clearCookie("access_token", baseCookieOptions);
+    reply.clearCookie("refresh_token", { ...baseCookieOptions, path: REFRESH_COOKIE_PATH });
+    reply.clearCookie("csrf_token", { ...baseCookieOptions, httpOnly: false });
 }

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { Provider } from "react-redux";
 import { createStore } from "../redux/store";
@@ -7,10 +7,18 @@ import { useSession } from "./useSession";
 
 const user = { id: "u1", email: "shopper@example.com" };
 
-// Pre-seeding the cache before rendering (rather than after) matters here:
-// this hook subscribes to getMe directly, so an empty cache at mount fires
-// a real fetch, which this test environment can't complete (see
-// AuthMenu.test.jsx's note on jsdom/undici's AbortSignal gap).
+// Every RTK Query slice goes through apiBaseQuery; replacing it lets each
+// test choose what the next getMe refetch returns (a real 401, a 500, a
+// network failure) instead of depending on this environment's fetch, which
+// can't complete a request at all (jsdom's AbortSignal isn't recognized by
+// Node's undici-backed Request).
+const nextResponse = vi.hoisted(() => ({ current: null }));
+vi.mock("../lib/rtkBaseQuery", () => ({ apiBaseQuery: async () => nextResponse.current }));
+
+beforeEach(() => {
+    nextResponse.current = { data: { user } };
+});
+
 function renderSessionWithSeededUser() {
     const store = createStore();
     store.dispatch(authApi.util.upsertQueryData("getMe", undefined, user));
@@ -18,6 +26,11 @@ function renderSessionWithSeededUser() {
         wrapper: ({ children }) => <Provider store={store}>{children}</Provider>,
     });
     return { result, store };
+}
+
+async function refetchSessionWith(store, response) {
+    nextResponse.current = response;
+    await store.dispatch(authApi.util.invalidateTags(["Session"]));
 }
 
 describe("useSession", () => {
@@ -31,16 +44,29 @@ describe("useSession", () => {
     // (AuthMenu, useCart, Checkout): RTK Query keeps the last *successful*
     // `data` around even after a later refetch errors. Logging out
     // invalidates the "Session" tag and re-triggers getMe, which correctly
-    // fails, but raw `data` would still hold the old user. Every caller of
-    // this hook needs `user` to become undefined at that point -- for
-    // useCart specifically, the alternative is a shopper who logs out and
-    // keeps shopping getting routed through server-cart calls that 401.
-    it("clears user to undefined once a Session-invalidating refetch fails, even though getMe's data still holds the old user", async () => {
+    // 401s, but raw `data` would still hold the old user.
+    it("clears user to undefined once a Session refetch returns 401, even though getMe's data still holds the old user", async () => {
         const { result, store } = renderSessionWithSeededUser();
         await waitFor(() => expect(result.current.user).toEqual(user));
 
-        await store.dispatch(authApi.util.invalidateTags(["Session"]));
+        await refetchSessionWith(store, { error: { status: 401, data: {} } });
 
         await waitFor(() => expect(result.current.user).toBeUndefined());
+    });
+
+    // Regression: any error used to count as "logged out", so a Render cold
+    // start or a dropped connection flipped a signed-in shopper to guest
+    // mode and routed add-to-cart into the local cart.
+    it.each([
+        ["a 500", { error: { status: 500, data: {} } }],
+        ["a network failure", { error: { status: "FETCH_ERROR", error: "TypeError: Failed to fetch" } }],
+    ])("keeps the last known user when the refetch fails with %s", async (_label, response) => {
+        const { result, store } = renderSessionWithSeededUser();
+        await waitFor(() => expect(result.current.user).toEqual(user));
+
+        await refetchSessionWith(store, response);
+
+        await waitFor(() => expect(authApi.endpoints.getMe.select()(store.getState()).isError).toBe(true));
+        expect(result.current.user).toEqual(user);
     });
 });

@@ -247,11 +247,28 @@ database, and a Key Value (Redis) instance together.
 5. Seed the catalog once, from Render's shell for the backend service:
    `node dist/db/seed.js`.
 
-The frontend isn't part of this Blueprint — it's a static build
-(`Dockerfile` at the repo root, or any static host) and needs `VITE_API_URL`
-pointed at the deployed backend's URL at *build* time (Vite inlines
-`import.meta.env.VITE_*` values into the bundle, so this can't be a runtime
-env var for a static SPA).
+The frontend isn't part of this Blueprint — it's a static build deployed to
+Vercel. It must reach the API **through its own origin**: `vercel.json`
+rewrites `/api/*` to the Render backend, and the Vercel project sets
+`VITE_API_URL=/api` (a *build*-time value — Vite inlines `import.meta.env.VITE_*`
+into the bundle). Calling the backend's `onrender.com` URL directly instead
+makes every auth cookie third-party: the frontend can't read `csrf_token`
+(so every mutating request 403s), and Safari/Brave/incognito drop the
+session cookies outright. `render.yaml` pairs this with
+`COOKIE_SAME_SITE=lax` and `COOKIE_PATH_PREFIX=/api`; `CORS_ORIGIN` and
+`FRONTEND_URL` stay set to the Vercel URL, because the CSRF check still
+compares the browser's `Origin` header (forwarded by the rewrite) against it.
+
+### Setting `TRUST_PROXY_HOPS`
+
+`req.ip` is the rate-limit key, resolved from `X-Forwarded-For` by trusting
+`TRUST_PROXY_HOPS` proxies. Too low and every user shares one proxy's
+address (one shared login bucket); too high and clients can spoof theirs.
+After a deploy, log in once and find the `login client address` line in the
+Render logs: it shows `ip` and the raw `xForwardedFor` chain. Compare `ip`
+with your own address (`curl ifconfig.me`); if it doesn't match, set
+`TRUST_PROXY_HOPS` in `render.yaml` to the count at which `ip` would be your
+address (each extra hop moves one entry left in the chain) and redeploy.
 
 ### Known limitation: slow first load after idle
 

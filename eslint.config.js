@@ -80,7 +80,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['*.config.js'],
+    files: ['*.config.js', 'e2e-prod/**/*.js'],
     languageOptions: {
       globals: globals.node,
     },

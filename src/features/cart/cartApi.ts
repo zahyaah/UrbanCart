@@ -40,12 +40,11 @@ export const cartApi = createApi({
             transformResponse: (response: { items: ServerCartItem[] }) => response.items,
             invalidatesTags: ["Cart"],
         }),
-        setServerCartItemQuantity: builder.mutation<ServerCartItem[], { productId: string; quantity: number }>({
-            query: ({ productId, quantity }) => ({
-                url: `/cart/items/${productId}`,
-                method: "PATCH",
-                body: { quantity },
-            }),
+        // Applied to the server's current quantity, not one computed from
+        // this cache -- two quick clicks are two decrements. Increment needs
+        // no counterpart: POST /cart/items already adds atomically.
+        decrementServerCartItem: builder.mutation<ServerCartItem[], string>({
+            query: (productId) => ({ url: `/cart/items/${productId}/decrement`, method: "POST" }),
             transformResponse: (response: { items: ServerCartItem[] }) => response.items,
             invalidatesTags: ["Cart"],
         }),
@@ -79,7 +78,7 @@ export const cartApi = createApi({
 export const {
     useGetServerCartQuery,
     useAddServerCartItemMutation,
-    useSetServerCartItemQuantityMutation,
+    useDecrementServerCartItemMutation,
     useRemoveServerCartItemMutation,
     useClearServerCartMutation,
     useMergeGuestCartMutation,

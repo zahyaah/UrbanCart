@@ -11,7 +11,7 @@ import {
 import {
     useGetServerCartQuery,
     useAddServerCartItemMutation,
-    useSetServerCartItemQuantityMutation,
+    useDecrementServerCartItemMutation,
     useRemoveServerCartItemMutation,
     useClearServerCartMutation,
 } from "../features/cart/cartApi";
@@ -47,7 +47,7 @@ export function useCart() {
     });
 
     const [addServerItem] = useAddServerCartItemMutation();
-    const [setServerQuantity] = useSetServerCartItemQuantityMutation();
+    const [decrementServerItem] = useDecrementServerCartItemMutation();
     const [removeServerItem] = useRemoveServerCartItemMutation();
     const [clearServer] = useClearServerCartMutation();
 
@@ -67,9 +67,11 @@ export function useCart() {
     };
 
     const incrementItem = (productId: string) => {
+        // Server-side deltas, not "cached quantity +/- 1" -- the cache is
+        // stale until the previous click's refetch lands, so rapid clicks
+        // used to overwrite each other instead of adding up.
         if (isAuthenticated) {
-            const current = items.find((i) => i.id === productId)?.quantity ?? 0;
-            setServerQuantity({ productId, quantity: current + 1 });
+            addServerItem({ productId, quantity: 1 });
         } else {
             dispatch(incrementLocalQuantity({ id: productId }));
         }
@@ -77,8 +79,7 @@ export function useCart() {
 
     const decrementItem = (productId: string) => {
         if (isAuthenticated) {
-            const current = items.find((i) => i.id === productId)?.quantity ?? 0;
-            setServerQuantity({ productId, quantity: Math.max(0, current - 1) });
+            decrementServerItem(productId);
         } else {
             dispatch(decrementLocalQuantity({ id: productId }));
         }

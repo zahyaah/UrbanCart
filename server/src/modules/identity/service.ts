@@ -36,7 +36,7 @@ async function issueNewSession(userId: string, sessionCreatedAt: Date): Promise<
     };
 }
 
-export async function register(email: string, password: string): Promise<SessionTokens> {
+export async function register(email: string, password: string): Promise<AuthenticatedSession> {
     const existing = await db.query.users.findFirst({ where: eq(users.email, email) });
     if (existing) {
         throw Errors.conflict("An account with this email already exists");
@@ -46,7 +46,7 @@ export async function register(email: string, password: string): Promise<Session
     const [user] = await db.insert(users).values({ email, passwordHash }).returning();
     if (!user) throw Errors.internal();
 
-    return issueNewSession(user.id, new Date());
+    return { user: { id: user.id, email: user.email }, tokens: await issueNewSession(user.id, new Date()) };
 }
 
 // A genuine bcrypt hash of a fixed, never-used password. Compared against
@@ -54,7 +54,7 @@ export async function register(email: string, password: string): Promise<Session
 // timing looks the same whether or not the account is registered.
 const DUMMY_HASH_FOR_TIMING_SAFETY = "$2b$12$CHuB7rC0.d6W7aeV8mDgXOHb0zwhL9wqQz6lUDrSnPzRUUM3Cw2dC";
 
-export async function login(email: string, password: string): Promise<SessionTokens> {
+export async function login(email: string, password: string): Promise<AuthenticatedSession> {
     const user = await db.query.users.findFirst({ where: eq(users.email, email) });
     const hashToCompare = user?.passwordHash ?? DUMMY_HASH_FOR_TIMING_SAFETY;
     const valid = await verifyPassword(password, hashToCompare);
@@ -63,7 +63,12 @@ export async function login(email: string, password: string): Promise<SessionTok
         throw Errors.unauthorized("Invalid email or password");
     }
 
-    return issueNewSession(user.id, new Date());
+    return { user: { id: user.id, email: user.email }, tokens: await issueNewSession(user.id, new Date()) };
+}
+
+export interface AuthenticatedSession {
+    user: { id: string; email: string };
+    tokens: SessionTokens;
 }
 
 type RefreshResult = SessionTokens | "invalid" | "theft";

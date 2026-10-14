@@ -90,6 +90,16 @@ export const cartSlice = createSlice({
         clearCart: () => {
             return [];
         },
+        // Subtracts exactly what a guest-cart merge sent, instead of
+        // clearing the whole cart -- an item added (or a quantity bumped)
+        // while the merge request was in flight wasn't part of it, and
+        // survives for the next merge rather than being silently lost.
+        removeMergedItems: (state, action: PayloadAction<CartItem[]>) => {
+            const sentQuantity = new Map(action.payload.map((item) => [String(item.id), item.quantity]));
+            return state
+                .map((item) => ({ ...item, quantity: item.quantity - (sentQuantity.get(String(item.id)) ?? 0) }))
+                .filter((item) => item.quantity > 0);
+        },
     },
 });
 
@@ -99,6 +109,7 @@ export const {
     decrementQuantity,
     removeFromCart,
     clearCart,
+    removeMergedItems,
 } = cartSlice.actions;
 
 export default cartSlice.reducer;

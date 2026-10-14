@@ -5,6 +5,7 @@ import reducer, {
     decrementQuantity,
     removeFromCart,
     clearCart,
+    removeMergedItems,
 } from "./cartSlice";
 
 const backpack = {
@@ -181,5 +182,31 @@ describe("cartSlice / rapid sequential dispatches", () => {
         state = reducer(state, decrementQuantity({ id: 1 }));
 
         expect(state[0].quantity).toBe(5);
+    });
+});
+
+describe("cartSlice / removeMergedItems", () => {
+    it("removes exactly what a merge sent", () => {
+        const sent = [
+            { ...backpack, quantity: 2 },
+            { ...tshirt, quantity: 1 },
+        ];
+
+        expect(reducer(sent, removeMergedItems(sent))).toEqual([]);
+    });
+
+    // Regression: a merge used to clearCart() on success, wiping anything
+    // added while the merge request was in flight.
+    it("keeps items and quantity added while the merge was in flight", () => {
+        const sent = [{ ...backpack, quantity: 1 }];
+        const current = [
+            { ...backpack, quantity: 2 },
+            { ...tshirt, quantity: 1 },
+        ];
+
+        expect(reducer(current, removeMergedItems(sent))).toEqual([
+            { ...backpack, quantity: 1 },
+            { ...tshirt, quantity: 1 },
+        ]);
     });
 });

@@ -1,5 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { User, LogOut } from "lucide-react";
+import { toast } from "sonner";
 import { useLogoutMutation } from "../../features/auth/authApi";
 import { useSession } from "../../hooks/useSession";
 import { Button } from "../ui/button";
@@ -21,9 +22,16 @@ function AuthMenu() {
     const [logout] = useLogoutMutation();
     const navigate = useNavigate();
 
+    // Unwrapped: a rejected logout (403, network) leaves the session alive
+    // server-side, and the Session refetch then shows the user still signed
+    // in. Without telling them, that looked like the button did nothing.
     const handleLogout = async () => {
-        await logout();
-        navigate("/");
+        try {
+            await logout().unwrap();
+            navigate("/");
+        } catch {
+            toast.error("Couldn't log out. Please try again.");
+        }
     };
 
     if (isLoading) {

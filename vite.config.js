@@ -18,7 +18,7 @@ export default defineConfig({
     // e2e/ is Playwright's; server/ is its own separate project (its own
     // vitest.config.ts, own DB, run via `cd server && npm test`) -- the
     // root runner must not sweep either up.
-    exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**', 'server/**'],
+    exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**', 'e2e-prod/**', 'server/**'],
     coverage: {
       provider: 'v8',
       reportsDirectory: './coverage',

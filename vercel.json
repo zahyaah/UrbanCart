@@ -1,5 +1,6 @@
 {
     "rewrites": [
+        { "source": "/api/:path*", "destination": "https://urbancart-backend-h8tu.onrender.com/:path*" },
         { "source": "/(.*)", "destination": "/index.html" }
     ]
 }

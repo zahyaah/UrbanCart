@@ -10,6 +10,11 @@ import { useGetMeQuery, type User } from "../features/auth/authApi";
  * (AuthMenu, useCart, Checkout) needs this -- routing them all through one
  * hook means the fix can't drift out of sync at a site added later. */
 export function useSession(): { user: User | undefined; isLoading: boolean } {
-    const { data, isLoading, isError } = useGetMeQuery();
-    return { user: isError ? undefined : data, isLoading };
+    const { data, isLoading, error } = useGetMeQuery();
+    // Only a 401 means "logged out". A cold start, 5xx or network blip says
+    // nothing about the session -- treating it as logged out flipped the UI
+    // to guest mode and sent add-to-cart into the local cart mid-session.
+    // On those, keep the last known user (undefined if there never was one).
+    const isLoggedOut = Boolean(error && "status" in error && error.status === 401);
+    return { user: isLoggedOut ? undefined : data, isLoading };
 }

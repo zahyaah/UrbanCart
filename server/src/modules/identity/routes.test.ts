@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { buildApp } from "../../app.js";
+import { redis } from "../../lib/redis.js";
 import { getCookie, cookieHeader } from "../../test/helpers.js";
 
 const CREDENTIALS = { email: "shopper@urbancart.test", password: "correct-horse-battery" };
@@ -246,6 +247,17 @@ describe("POST /auth/logout", () => {
         expect(logoutRes.statusCode).toBe(200);
         expect(getCookie(logoutRes, "access_token")?.value).toBe("");
 
+        // Regression: the clearing Set-Cookie must carry the same attributes
+        // the cookie was set with -- a bare { path } defaulted to
+        // SameSite=Lax, which browsers drop on a cross-site response, so
+        // logout left every auth cookie in place in production.
+        for (const name of ["access_token", "refresh_token", "csrf_token"]) {
+            const set = getCookie(sessionRes, name)!;
+            const cleared = getCookie(logoutRes, name)!;
+            expect(cleared).toMatchObject({ path: set.path, sameSite: set.sameSite });
+            expect(Boolean(cleared.secure)).toBe(Boolean(set.secure));
+        }
+
         const refreshRes = await app.inject({
             method: "POST",
             url: "/auth/refresh",
@@ -256,5 +268,106 @@ describe("POST /auth/logout", () => {
             },
         });
         expect(refreshRes.statusCode).toBe(401);
+    });
+});
+
+describe("auth rate limiting", () => {
+    function badLogin(app: Awaited<ReturnType<typeof buildApp>>, headers: Record<string, string> = {}) {
+        return app.inject({
+            method: "POST",
+            url: "/auth/login",
+            payload: { email: "nobody@urbancart.test", password: "wrong-password" },
+            headers,
+        });
+    }
+
+    // Regression: trustProxy: true resolved req.ip (the rate-limit key) to
+    // the leftmost X-Forwarded-For entry, which any client controls --
+    // rotating it per request bypassed the login limit entirely.
+    it("still returns 429 on the 11th login when X-Forwarded-For rotates every request", async () => {
+        const app = await buildApp();
+
+        const statuses: number[] = [];
+        for (let i = 0; i < 11; i++) {
+            const res = await badLogin(app, { "x-forwarded-for": `203.0.113.${i + 1}` });
+            statuses.push(res.statusCode);
+        }
+
+        expect(statuses.slice(0, 10).every((s) => s === 401)).toBe(true);
+        expect(statuses[10]).toBe(429);
+    });
+
+    // Regression: refresh shared the login limit's per-IP bucket, so
+    // shoppers behind one NAT/proxy address exhausted it together and got
+    // logged out. One token being hammered must not affect anyone else's.
+    it("keys the refresh limit per token, so another session on the same IP is unaffected", async () => {
+        const { app, res: sessionRes } = await registerAndGetApp();
+        const csrfToken = getCookie(sessionRes, "csrf_token")!.value;
+        const refreshWith = (refreshToken: string) =>
+            app.inject({
+                method: "POST",
+                url: "/auth/refresh",
+                headers: {
+                    cookie: `refresh_token=${refreshToken}; csrf_token=${csrfToken}`,
+                    origin: "http://localhost:5173",
+                    "x-csrf-token": csrfToken,
+                },
+            });
+
+        const statuses: number[] = [];
+        for (let i = 0; i < 11; i++) {
+            statuses.push((await refreshWith("not-a-real-refresh-token")).statusCode);
+        }
+        expect(statuses.slice(0, 10).every((s) => s === 401)).toBe(true);
+        expect(statuses[10]).toBe(429);
+
+        const res = await refreshWith(getCookie(sessionRes, "refresh_token")!.value);
+        expect(res.statusCode).toBe(200);
+    });
+
+    describe("when the Redis rate-limit store errors", () => {
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        // RedisStore.incr calls the custom `rateLimit` command it defines on
+        // the shared client the first time a store is built (in buildApp).
+        function breakRateLimitStore() {
+            if (!redis) throw new Error("these tests need REDIS_URL (see server/.env.test)");
+            vi.spyOn(redis as unknown as { rateLimit: (...args: unknown[]) => void }, "rateLimit").mockImplementation(
+                (...args: unknown[]) => {
+                    const cb = args[args.length - 1] as (err: Error) => void;
+                    cb(new Error("simulated Redis outage"));
+                }
+            );
+        }
+
+        it("fails closed on login: no password check runs while the limiter is blind", async () => {
+            const app = await buildApp();
+            breakRateLimitStore();
+
+            const res = await badLogin(app);
+
+            // @fastify/rate-limit rethrows the store error; it reaches the
+            // global error handler as an unexpected error (500), never 401.
+            expect(res.statusCode).toBe(500);
+        });
+
+        it("fails open on refresh: an outage must not log every active user out", async () => {
+            const { app, res: sessionRes } = await registerAndGetApp();
+            breakRateLimitStore();
+
+            const res = await app.inject({
+                method: "POST",
+                url: "/auth/refresh",
+                headers: {
+                    cookie: cookieHeader(sessionRes, ["refresh_token", "csrf_token"]),
+                    origin: "http://localhost:5173",
+                    "x-csrf-token": getCookie(sessionRes, "csrf_token")!.value,
+                },
+            });
+
+            expect(res.statusCode).toBe(200);
+        });
     });
 });
