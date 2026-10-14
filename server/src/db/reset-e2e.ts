@@ -13,7 +13,13 @@ import { redis } from "../lib/redis.js";
 // guard: only a local database whose name ends in "_e2e", local Redis.
 async function main() {
     assertSafeSeedTarget(process.env);
-    const dbName = new URL(process.env.DATABASE_URL!).pathname.slice(1);
+    const dbUrl = new URL(process.env.DATABASE_URL!);
+    // Local only, with no ALLOW_REMOTE_SEED exception: this empties every
+    // table, not just the catalog.
+    if (!isLocalHost(dbUrl.hostname)) {
+        throw new Error(`Refusing to reset "${dbUrl.hostname}": the e2e reset only runs against a local database.`);
+    }
+    const dbName = dbUrl.pathname.slice(1);
     if (!dbName.endsWith("_e2e")) {
         throw new Error(`Refusing to reset "${dbName}": only a database named *_e2e can be reset.`);
     }
