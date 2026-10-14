@@ -306,11 +306,13 @@ compares the browser's `Origin` header (forwarded by the rewrite) against it.
 `req.ip` is the rate-limit key, resolved from `X-Forwarded-For` by trusting
 `TRUST_PROXY_HOPS` proxies. Too low and every user shares one proxy's
 address (one shared login bucket); too high and clients can spoof theirs.
-After a deploy, log in once and find the `login client address` line in the
-Render logs: it shows `ip` and the raw `xForwardedFor` chain. Compare `ip`
-with your own address (`curl ifconfig.me`); if it doesn't match, set
-`TRUST_PROXY_HOPS` in `render.yaml` to the count at which `ip` would be your
-address (each extra hop moves one entry left in the chain) and redeploy.
+Production uses `4`, verified against the chain client → Vercel →
+Cloudflare → Render internal. To re-check after an infrastructure change,
+make a request through the Vercel domain and read that request's
+`remoteAddress` in the Render logs (Fastify logs it on every request; it is
+`req.ip`). It must be your own address (`curl ifconfig.me`). Repeat with a
+forged `X-Forwarded-For: 6.6.6.6` header: `remoteAddress` must still be
+your address, never `6.6.6.6`.
 
 ### Known limitation: slow first load after idle
 

@@ -97,13 +97,6 @@ export async function identityRoutes(app: FastifyInstance) {
             const { email, password } = request.body;
             const { user, tokens } = await login(email, password);
             setAuthCookies(reply, tokens);
-            // req.ip is the login rate-limit key. Logging it beside the raw
-            // X-Forwarded-For chain is how TRUST_PROXY_HOPS gets set: pick
-            // the value at which `ip` equals the client's real address.
-            request.log.info(
-                { ip: request.ip, xForwardedFor: request.headers["x-forwarded-for"] },
-                "login client address"
-            );
             return { user };
         },
     });

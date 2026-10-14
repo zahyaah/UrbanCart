@@ -38,8 +38,8 @@ const envSchema = z.object({
     // How many proxies in front of this service to trust when resolving
     // req.ip (the rate-limit key) from X-Forwarded-For. Production only.
     // Too low: req.ip is a proxy's address and every user shares one login
-    // bucket. Too high: clients can spoof their own address. Set from what
-    // the "login client address" log line shows -- see README.
+    // bucket. Too high: clients can spoof their own address. See README's
+    // "Setting TRUST_PROXY_HOPS".
     TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(5).default(1),
     FRONTEND_URL: z.string().min(1),
     // Auth rate limits (attempts per 15 minutes). The defaults ARE the
