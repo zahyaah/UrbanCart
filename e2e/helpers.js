@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { expect } from "@playwright/test";
 
 /**
@@ -50,14 +51,23 @@ export async function fillAddressStep(page) {
     await page.getByRole("button", { name: "Continue to Payment" }).click();
 }
 
-export async function fillPaymentStep(page) {
-    await expect(page.getByRole("heading", { name: "Payment" })).toBeVisible();
+/**
+ * Registers a fresh account through the API, in a request context separate
+ * from the page's browser context, so the page itself stays signed out.
+ * Credentials are generated per run, never hardcoded.
+ */
+export async function createUser(request) {
+    const credentials = { email: `e2e-${randomUUID()}@urbancart.test`, password: randomUUID() };
+    const res = await request.post("/api/auth/register", { data: credentials });
+    expect(res.status(), await res.text()).toBe(201);
+    return credentials;
+}
 
-    await page.fill('input[name="cardholderName"]', "Test User");
-    await page.fill('input[name="cardNumber"]', "4242424242424242");
-    await page.fill('input[name="expiry"]', "04/28");
-    await page.fill('input[name="cvc"]', "123");
-    await expect(page.locator('input[name="cvc"]')).toHaveValue("123");
-
-    await page.getByRole("button", { name: "Review Order" }).click();
+/** Fills and submits the sign-in form; the page must already be on /login. */
+export async function signIn(page, { email, password }) {
+    await expect(page).toHaveURL(/\/login$/);
+    await page.fill('input[name="email"]', email);
+    await page.fill('input[name="password"]', password);
+    await page.getByRole("button", { name: "Sign In" }).click();
+    await expect(page.getByRole("button", { name: `Account menu for ${email}` })).toBeVisible();
 }

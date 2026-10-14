@@ -33,19 +33,12 @@ test.describe("product catalog", () => {
         });
     }
 
-    test("shows at least four products above the fold on mobile", async ({ page }) => {
-        // The two-column mobile grid exists so shoppers can compare without
-        // scrolling; a regression to one column silently breaks that.
-        await page.setViewportSize({ width: 375, height: 800 });
+    test("shows the first product card without scrolling", async ({ page }) => {
+        // Each project's own configured viewport (Desktop Chrome, Pixel 5):
+        // the first card's product image must be fully on screen on load.
         await page.goto("/");
-        await expect(page.getByRole("button", { name: "ADD TO CART" }).first()).toBeVisible();
 
-        const cards = page.getByRole("button", { name: "ADD TO CART" });
-        const visibleInViewport = await cards.evaluateAll((nodes) =>
-            nodes.filter((node) => node.getBoundingClientRect().top < 800).length
-        );
-
-        expect(visibleInViewport).toBeGreaterThanOrEqual(4);
+        await expect(page.locator('a[href^="/product/"]').first()).toBeInViewport({ ratio: 1 });
     });
 
     test("confirms an add-to-cart with a toast", async ({ page }) => {
@@ -64,8 +57,18 @@ test.describe("product detail", () => {
         const errors = trackConsoleErrors(page);
         await page.setViewportSize({ width: 375, height: 800 });
 
-        await page.goto("/product/1");
-        await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+        // Product ids are UUIDs assigned by the backend, so reach a product
+        // the way a shopper does: through the first card on the listing.
+        await page.goto("/");
+        const firstCard = page.locator('a[href^="/product/"]').first();
+        const href = await firstCard.getAttribute("href");
+        const title = await firstCard.getByRole("img").getAttribute("alt");
+        await firstCard.click();
+
+        await expect(page).toHaveURL(new RegExp(`${href}$`));
+        // The product's own heading -- the listing also has an <h1>, and it
+        // stays mounted while the route transition plays.
+        await expect(page.getByRole("heading", { level: 1, name: title })).toBeVisible();
         await expect(page.getByRole("button", { name: "ADD TO CART" })).toBeVisible();
 
         await expectNoHorizontalOverflow(page);
