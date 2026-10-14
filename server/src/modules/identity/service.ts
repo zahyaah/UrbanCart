@@ -50,8 +50,11 @@ export async function register(email: string, password: string): Promise<Authent
 }
 
 // A genuine bcrypt hash of a fixed, never-used password. Compared against
-// on every login for an email that doesn't exist, so verifyPassword's
-// timing looks the same whether or not the account is registered.
+// on every login for an email that doesn't exist, so login's response
+// timing doesn't reveal whether an account exists. This is NOT a guarantee
+// that accounts can't be enumerated: register deliberately answers 409 for
+// an existing email (accepted risk, rate limited per IP), so it only stops
+// login from being a second, unthrottled oracle.
 const DUMMY_HASH_FOR_TIMING_SAFETY = "$2b$12$CHuB7rC0.d6W7aeV8mDgXOHb0zwhL9wqQz6lUDrSnPzRUUM3Cw2dC";
 
 export async function login(email: string, password: string): Promise<AuthenticatedSession> {

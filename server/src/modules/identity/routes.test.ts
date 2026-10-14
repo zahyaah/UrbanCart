@@ -325,6 +325,91 @@ describe("auth rate limiting", () => {
         expect(res.statusCode).toBe(200);
     });
 
+    // The per-IP limit alone isn't enough: a client calling the Render
+    // origin directly controls X-Forwarded-For, so in production it can
+    // present a fresh "IP" per attempt. Tests run with trustProxy off, so a
+    // rotated XFF header wouldn't change req.ip here -- inject's
+    // remoteAddress produces the same effect a spoofed-and-trusted XFF has.
+    it("returns 429 on the 21st login for one email, even from a different IP every attempt", async () => {
+        const app = await buildApp();
+
+        const statuses: number[] = [];
+        for (let i = 0; i < 21; i++) {
+            const res = await app.inject({
+                method: "POST",
+                url: "/auth/login",
+                remoteAddress: `203.0.113.${i + 1}`,
+                payload: { email: "victim@urbancart.test", password: "wrong-password" },
+            });
+            statuses.push(res.statusCode);
+        }
+
+        expect(statuses.slice(0, 20).every((s) => s === 401)).toBe(true);
+        expect(statuses[20]).toBe(429);
+    });
+
+    it("normalizes the email before keying the per-email limit", async () => {
+        const app = await buildApp();
+
+        for (let i = 0; i < 20; i++) {
+            await app.inject({
+                method: "POST",
+                url: "/auth/login",
+                remoteAddress: `198.51.100.${i + 1}`,
+                payload: { email: i % 2 ? "Victim@UrbanCart.test" : "  victim@urbancart.test ", password: "wrong-password" },
+            });
+        }
+        const res = await app.inject({
+            method: "POST",
+            url: "/auth/login",
+            remoteAddress: "198.51.100.200",
+            payload: { email: "victim@urbancart.test", password: "wrong-password" },
+        });
+
+        expect(res.statusCode).toBe(429);
+    });
+
+    it("keeps the per-email limit per account: a different email from the same IP still works", async () => {
+        const { app } = await registerAndGetApp();
+        for (let i = 0; i < 21; i++) {
+            await app.inject({
+                method: "POST",
+                url: "/auth/login",
+                remoteAddress: `203.0.113.${i + 1}`,
+                payload: { email: "victim@urbancart.test", password: "wrong-password" },
+            });
+        }
+
+        // 203.0.113.21 has used 1 of its 10 per-IP attempts.
+        const res = await app.inject({
+            method: "POST",
+            url: "/auth/login",
+            remoteAddress: "203.0.113.21",
+            payload: CREDENTIALS,
+        });
+
+        expect(res.statusCode).toBe(200);
+    });
+
+    // Register still answers 409 for an existing email (accepted
+    // enumeration risk); this per-IP limit is what bounds that oracle.
+    it("returns 429 on the 11th register from one IP", async () => {
+        const app = await buildApp();
+
+        const statuses: number[] = [];
+        for (let i = 0; i < 11; i++) {
+            const res = await app.inject({
+                method: "POST",
+                url: "/auth/register",
+                payload: { email: `new-${i}@urbancart.test`, password: "correct-horse-battery" },
+            });
+            statuses.push(res.statusCode);
+        }
+
+        expect(statuses.slice(0, 10).every((s) => s === 201)).toBe(true);
+        expect(statuses[10]).toBe(429);
+    });
+
     describe("when the Redis rate-limit store errors", () => {
         afterEach(() => {
             vi.restoreAllMocks();
