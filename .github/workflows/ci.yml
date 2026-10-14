@@ -120,14 +120,12 @@ jobs:
       - name: Build
         run: npm run build
 
-  # Runs against a real backend (see playwright.config.js). Still
-  # continue-on-error until it has had a green run here; drop that line
-  # once it has, so e2e failures block merges like the other jobs.
+  # Runs against a real backend (see playwright.config.js). Blocking:
+  # an e2e failure fails the workflow like the other jobs.
   e2e:
     name: End-to-end tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    continue-on-error: true
     # The storefront loads its catalog from the backend, which
     # playwright.config.js starts (migrate, seed, serve) against these
     # services. Without them, /products fails and no product card renders.
