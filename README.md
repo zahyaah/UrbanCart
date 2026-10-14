@@ -247,23 +247,47 @@ correctly refusing requests, not a realistic journey):
 ## Deployment
 
 `render.yaml` is a [Render Blueprint](https://render.com/docs/blueprint-spec):
-one file provisions the backend (Docker web service), a managed Postgres
-database, and a Key Value (Redis) instance together.
+one file provisions the backend (Docker web service) and a Key Value (Redis)
+instance. Postgres is a [Neon](https://neon.com) project (Render's free
+Postgres expires after its trial), connected through two dashboard-only
+variables:
+
+- `DATABASE_URL` — Neon's **pooled** connection string (host ends in
+  `-pooler`), for app traffic.
+- `DATABASE_URL_UNPOOLED` — Neon's **direct** connection string, used by the
+  migrations that run on every boot (`server/src/db/migrate.ts`); schema
+  changes over PgBouncer's transaction pooling can fail.
+
+Keep Neon's `?sslmode=require`: `server/src/db/connection.ts` pins it to
+`verify-full`, so the certificate and hostname are always verified.
 
 1. Push this branch to GitHub.
 2. Render dashboard → **New** → **Blueprint** → select this repo.
 3. Render reads `render.yaml` and prompts for the `sync: false` secrets:
+   `DATABASE_URL` and `DATABASE_URL_UNPOOLED` (above),
    `JWT_ACCESS_SECRET` (32+ random characters), `SENTRY_DSN` (optional — leave blank to keep
    Sentry a no-op), `CORS_ORIGIN` and `FRONTEND_URL` (wherever the frontend
    ends up hosted).
 4. Deploy. `dockerCommand` runs the DB migration before starting the server
    on every deploy (idempotent — drizzle's migrator skips already-applied
    migrations), so no separate manual migration step is needed.
-5. Load the catalog. `node dist/db/seed.js` **refuses to run here** by
-   design: it wipes the products table, so it only runs with
-   `NODE_ENV` other than `production` against a local database host
-   (`server/src/db/seed-guard.ts`). There is no supported path yet for
-   loading the catalog into a production database.
+5. Load the catalog **once**, from your own machine. The seed script wipes
+   and reloads the products table, so it refuses any non-local database
+   unless `ALLOW_REMOTE_SEED` names that exact database (`neondb` is Neon's
+   default), and it always refuses `NODE_ENV=production`
+   (`server/src/db/seed-guard.ts`). It also fails, harmlessly, once any cart
+   or order references a product — it's for an empty database. Use the
+   **direct** connection string:
+
+   ```bash
+   cd server && npm ci
+   read -rs NEON_DIRECT_URL   # paste the direct (non -pooler) URL, then Enter
+   DATABASE_URL="$NEON_DIRECT_URL" npx tsx src/db/migrate.ts
+   DATABASE_URL="$NEON_DIRECT_URL" ALLOW_REMOTE_SEED=neondb npx tsx src/db/seed.ts
+   unset NEON_DIRECT_URL
+   ```
+
+   `read -rs` keeps the password out of your shell history.
 
 The frontend isn't part of this Blueprint — it's a static build deployed to
 Vercel. It must reach the API **through its own origin**: `vercel.json`
@@ -290,8 +314,9 @@ address (each extra hop moves one entry left in the chain) and redeploy.
 
 ### Known limitation: slow first load after idle
 
-`render.yaml` provisions all three services (`urbancart-postgres`,
-`urbancart-redis`, `urbancart-backend`) on Render's **free** plan. A free web
+`render.yaml` provisions both Render services (`urbancart-redis`,
+`urbancart-backend`) on Render's **free** plan; Neon's free plan likewise
+suspends idle compute (a first query after idle takes a few hundred ms). A free web
 service spins down after 15 minutes with no inbound traffic and cold-starts
 on the next request — a shopper landing on the site after a quiet period can
 see a multi-second delay before the catalog loads, on that first request

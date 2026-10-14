@@ -27,6 +27,38 @@ describe("assertSafeSeedTarget", () => {
         expect(() => assertSafeSeedTarget({ NODE_ENV: "development", DATABASE_URL: url })).toThrow(/is not local/);
     });
 
+    describe("ALLOW_REMOTE_SEED", () => {
+        const NEON = "postgresql://neondb_owner:pw@ep-cool-name-a1b2c3.us-west-2.aws.neon.tech/neondb?sslmode=require";
+
+        it("allows a remote database when it names that exact database", () => {
+            expect(() => assertSafeSeedTarget({ DATABASE_URL: NEON, ALLOW_REMOTE_SEED: "neondb" })).not.toThrow();
+        });
+
+        it.each([
+            ["is unset", undefined],
+            ["is empty", ""],
+            ["is a boolean-style value", "true"],
+            ["names a different database", "otherdb"],
+            ["differs only in case", "NeonDB"],
+        ])("refuses when it %s", (_label, value) => {
+            expect(() => assertSafeSeedTarget({ DATABASE_URL: NEON, ALLOW_REMOTE_SEED: value })).toThrow(
+                /is not local.*ALLOW_REMOTE_SEED=neondb/
+            );
+        });
+
+        it("refuses a remote URL with no database name, even with an override set", () => {
+            expect(() =>
+                assertSafeSeedTarget({ DATABASE_URL: "postgres://u:p@db.example.com", ALLOW_REMOTE_SEED: "" })
+            ).toThrow(/is not local/);
+        });
+
+        it("still refuses NODE_ENV=production with a matching override", () => {
+            expect(() =>
+                assertSafeSeedTarget({ NODE_ENV: "production", DATABASE_URL: NEON, ALLOW_REMOTE_SEED: "neondb" })
+            ).toThrow(/NODE_ENV=production/);
+        });
+    });
+
     it("refuses a missing or malformed DATABASE_URL", () => {
         expect(() => assertSafeSeedTarget({ NODE_ENV: "development" })).toThrow(/not a valid URL/);
         expect(() => assertSafeSeedTarget({ DATABASE_URL: "not a url" })).toThrow(/not a valid URL/);

@@ -1,5 +1,6 @@
-# Render Blueprint -- provisions the backend, its Postgres database, and its
-# Key Value (Redis) instance together from one file. Deploy via Render's
+# Render Blueprint -- provisions the backend and its Key Value (Redis)
+# instance. Postgres is Neon (Render's free Postgres expires); its connection
+# strings are set in the Render dashboard, never in this file. Deploy via Render's
 # dashboard: New -> Blueprint -> connect this repo. See README.md's
 # Deployment section for the full walkthrough.
 #
@@ -10,11 +11,6 @@
 # start) runs migrations before every boot instead -- drizzle's migrator
 # tracks applied migrations and no-ops on ones already run, so repeating it
 # on every restart is safe.
-databases:
-  - name: urbancart-postgres
-    plan: free
-    region: oregon
-
 services:
   - name: urbancart-redis
     type: keyvalue
@@ -35,10 +31,14 @@ services:
         value: production
       - key: PORT
         value: 3001
+      # Neon, set in the dashboard. DATABASE_URL: the POOLED string (host
+      # ends in "-pooler") for app traffic. DATABASE_URL_UNPOOLED: the
+      # DIRECT string, which boot-time migrations use (server/src/db/
+      # migrate.ts). Both keep Neon's ?sslmode=require.
       - key: DATABASE_URL
-        fromDatabase:
-          name: urbancart-postgres
-          property: connectionString
+        sync: false
+      - key: DATABASE_URL_UNPOOLED
+        sync: false
       - key: REDIS_URL
         fromService:
           name: urbancart-redis
